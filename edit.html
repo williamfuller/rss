@@ -24,10 +24,12 @@
 				<label for="URL">URL</label>
 				<input id="URL" type="text"  name="URL" value="{{.URL}}" autocomplete="off" required/>
 			</div>
-			<input type="submit" value="Save"/>
-		{{if .Id}}
-			<a href="/feeds/delete/{{.Id}}">Delete</a>
-		{{end}}
+			<div id="action-btns">
+				<input type="submit" value="Save"/>
+				{{if .Id}}
+					<a href="/feeds/delete/{{.Id}}">Delete</a>
+				{{end}}
+			</div>
 		</form>
   </body>
 </html>

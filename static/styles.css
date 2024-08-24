@@ -15,3 +15,28 @@ max-width: 90%;
 a{
 	color: white;
 }
+
+form {
+	display: flex;
+	flex-direction: column;
+	row-gap: 1rem;
+	max-width: 30rem;
+}
+
+form > div {
+	display: flex;
+	flex-direction: column;
+}
+
+form > #action-btns{
+	display: inline;
+	align-self: self-end;
+}
+
+form > #action-btns > *{
+	width: 10rem;
+}
+
+input[type=text]{
+	height: 1.5rem;
+}
