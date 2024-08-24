@@ -1,0 +1,20 @@
+:root{
+background-color: black;
+color: white;
+}
+
+ul{
+	padding-top: 1rem;
+	padding-bottom: 1rem;
+}
+
+li{
+	padding-bottom: 0.5rem;
+}
+img{
+max-width: 90%;
+}
+
+a{
+	color: white;
+}

@@ -1,2 +1,2 @@
 # rss
-My simple rss reader 
+My simple rss reader
