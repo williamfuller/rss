@@ -1,6 +1,6 @@
-:root{
-background-color: black;
-color: white;
+body{
+	background-color: black;
+	color: white;
 }
 
 ul{
@@ -8,9 +8,6 @@ ul{
 	padding-bottom: 1rem;
 }
 
-li{
-	padding-bottom: 0.5rem;
-}
 img{
 max-width: 90%;
 }

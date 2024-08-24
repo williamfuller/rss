@@ -1,0 +1,22 @@
+@import "styles.css";
+
+#feed-list{
+	padding-left: 0;
+	display: flex;
+	flex-direction: column;
+	row-gap: 1rem;
+}
+
+#feed-item{
+	color: black;
+	background-color: white;
+	max-width: 30rem;
+	border-radius: 4px;
+	padding: 1rem;
+	display: flex;
+	justify-content: space-between;
+}
+
+#feed-item > a{
+	color: black;
+}
