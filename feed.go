@@ -2,8 +2,10 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"html/template"
 	"net/http"
+	"strconv"
 )
 
 func showFeed(d *sql.DB) func(w http.ResponseWriter, r *http.Request) {
@@ -29,18 +31,24 @@ func showFeed(d *sql.DB) func(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func idParam(r *http.Request) int {
+	id, err := strconv.Atoi(r.PathValue("Id"))
+	if err != nil {
+		id = 0
+	}
+
+	return id
+}
+
 func getEditFeed(d *sql.DB) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var feed Feed
 
-		id := r.PathValue("Id")
-		if id != "" {
-			err := d.
-				QueryRowContext(r.Context(), "SELECT id, name, url FROM feeds WHERE id = $1", id).
-				Scan(&feed.Id, &feed.Name, &feed.URL)
-			if err != nil {
-				panic(err)
-			}
+		err := d.
+			QueryRowContext(r.Context(), "SELECT id, url FROM feeds WHERE id = $1", idParam(r)).
+			Scan(&feed.Id, &feed.URL)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			panic(err)
 		}
 
 		tmplt, err := template.ParseFiles("templates/edit.html")
@@ -58,26 +66,41 @@ func setEditFeed(d *sql.DB) func(w http.ResponseWriter, r *http.Request) {
 			panic(err)
 		}
 
-		id := r.FormValue("Id")
-		if id == "0" {
-			_, err = d.
-				ExecContext(r.Context(), "INSERT INTO feeds (name, url) VALUES ($1, $2)", r.FormValue("Name"), r.FormValue("URL"))
-		} else {
-			_, err = d.
-				ExecContext(r.Context(), "UPDATE feeds SET name=$1, url=$2 WHERE id=$3", r.FormValue("Name"), r.FormValue("URL"), id)
-		}
-		if err != nil {
-			panic(err)
+		feed := Feed{
+			Id:  idParam(r),
+			URL: r.FormValue("URL"),
 		}
 
-		if id != "0" {
-			err = redirect(w, "feed updated ")
-		} else {
-			err = redirect(w, "feed added")
-		}
+		rss, err := rss(feed.URL)
 		if err != nil {
 			panic(err)
 		}
+		feed.Name = rss.Channels[0].Title
+
+		if feed.Id == 0 {
+			_, err = d.
+				ExecContext(r.Context(), "INSERT INTO feeds (name, url) VALUES ($1, $2)", feed.Name, feed.URL)
+			if err != nil {
+				panic(err)
+			}
+
+			err = redirect(w, "feed added")
+			if err != nil {
+				panic(err)
+			}
+		} else {
+			_, err = d.
+				ExecContext(r.Context(), "UPDATE feeds SET name=$1, url=$2 WHERE id=$3", feed.Name, feed.URL, feed.Id)
+			if err != nil {
+				panic(err)
+			}
+
+			err = redirect(w, "feed updated")
+			if err != nil {
+				panic(err)
+			}
+		}
+
 	}
 }
 
