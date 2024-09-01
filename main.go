@@ -9,6 +9,7 @@ import (
 	"html/template"
 	"io"
 	"net/http"
+	"os"
 
 	_ "github.com/lib/pq"
 
@@ -92,7 +93,7 @@ func rss(url string) (*Rss, error) {
 }
 
 func redirect(w http.ResponseWriter, message string) error {
-	tmplt, err := template.ParseFiles("redirect.html")
+	tmplt, err := template.ParseFiles("templates/redirect.html")
 	if err != nil {
 		return err
 	}
@@ -123,7 +124,7 @@ func index(d *sql.DB) func(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		tmplt, err := template.ParseFiles("index.html")
+		tmplt, err := template.ParseFiles("templates/index.html")
 		if err != nil {
 			panic(err)
 		}
@@ -146,7 +147,7 @@ func showFeed(d *sql.DB) func(w http.ResponseWriter, r *http.Request) {
 			panic(err)
 		}
 
-		tmplt, err := template.ParseFiles("feed.html")
+		tmplt, err := template.ParseFiles("templates/feed.html")
 		if err != nil {
 			panic(err)
 		}
@@ -168,7 +169,7 @@ func getEditFeed(d *sql.DB) func(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		tmplt, err := template.ParseFiles("edit.html")
+		tmplt, err := template.ParseFiles("templates/edit.html")
 		if err != nil {
 			panic(err)
 		}
@@ -231,20 +232,28 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
 	err = db.Ping()
 	if err != nil {
 		panic(err)
 	}
 
-	http.HandleFunc("GET /{$}", index(db))
-	http.HandleFunc("GET /feeds/edit/{Id}", getEditFeed(db))
-	http.HandleFunc("GET /feeds/edit", getEditFeed(db))
-	http.HandleFunc("POST /feeds/edit", setEditFeed(db))
-	http.HandleFunc("GET /feeds/delete/{Id}", deleteFeed(db))
-	http.HandleFunc("GET /feeds/show/{Id}", showFeed(db))
-	http.Handle("/static/", http.FileServer(http.Dir("")))
-	err = http.ListenAndServe(":8080", nil)
-	if err != nil {
-		panic(err)
+	if len(os.Args) > 1 && os.Args[1] == "migrate" {
+		err := migrate(db)
+		if err != nil {
+			panic(err)
+		}
+	} else {
+		http.HandleFunc("GET /{$}", index(db))
+		http.HandleFunc("GET /feeds/edit/{Id}", getEditFeed(db))
+		http.HandleFunc("GET /feeds/edit", getEditFeed(db))
+		http.HandleFunc("POST /feeds/edit", setEditFeed(db))
+		http.HandleFunc("GET /feeds/delete/{Id}", deleteFeed(db))
+		http.HandleFunc("GET /feeds/show/{Id}", showFeed(db))
+		http.Handle("/static/", http.FileServer(http.Dir("")))
+		err = http.ListenAndServe(":8080", nil)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
