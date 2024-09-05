@@ -43,7 +43,6 @@ func idParam(r *http.Request) int {
 func getEditFeed(d *sql.DB) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var feed Feed
-
 		err := d.
 			QueryRowContext(r.Context(), "SELECT id, url FROM feeds WHERE id = $1", idParam(r)).
 			Scan(&feed.Id, &feed.URL)
