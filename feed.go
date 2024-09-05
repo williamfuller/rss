@@ -32,7 +32,7 @@ func showFeed(d *sql.DB) func(w http.ResponseWriter, r *http.Request) {
 }
 
 func idParam(r *http.Request) int {
-	id, err := strconv.Atoi(r.PathValue("Id"))
+	id, err := strconv.Atoi(r.FormValue("Id"))
 	if err != nil {
 		id = 0
 	}
