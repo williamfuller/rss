@@ -31,7 +31,7 @@ func showFeed(d *sql.DB) func(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func idParam(r *http.Request) int {
+func idFormValue(r *http.Request) int {
 	id, err := strconv.Atoi(r.FormValue("Id"))
 	if err != nil {
 		id = 0
@@ -44,7 +44,7 @@ func getEditFeed(d *sql.DB) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var feed Feed
 		err := d.
-			QueryRowContext(r.Context(), "SELECT id, url FROM feeds WHERE id = $1", idParam(r)).
+			QueryRowContext(r.Context(), "SELECT id, url FROM feeds WHERE id = $1", r.PathValue("Id")).
 			Scan(&feed.Id, &feed.URL)
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			panic(err)
@@ -66,7 +66,7 @@ func setEditFeed(d *sql.DB) func(w http.ResponseWriter, r *http.Request) {
 		}
 
 		feed := Feed{
-			Id:  idParam(r),
+			Id:  idFormValue(r),
 			URL: r.FormValue("URL"),
 		}
 
