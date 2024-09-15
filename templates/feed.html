@@ -13,10 +13,14 @@
 				<ul class="flex flex-col gap-y-2 py-2">
 					{{range .Items}}
 						<li class="bg-gray-100 border rounded-md px-2 max-w-7xl">
-							<a href="{{.Link}}" target="_blank">
-								<h2 class="font-medium underline">{{.Title}}</h2>
-								<p>{{.Description}}</p>
-							</a>
+								<a href="{{.Link}}" target="_blank">
+									<h2 class="font-medium underline">{{.Title}}</h2>
+								</a>
+								{{if .CommentsLink.Valid}}
+									<a href="{{.CommentsLink.String}}" target="_blank">Comments</a>
+								{{else}}
+									<p>{{.Description}}</p>
+								{{end}}
 						</li>
 					{{end}}
 				</ul>

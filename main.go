@@ -30,9 +30,10 @@ type Channel struct {
 }
 
 type Item struct {
-	Title       string `xml:"title"`
-	Link        string `xml:"link"`
-	Description string `xml:"description"`
+	Title        string         `xml:"title"`
+	Link         string         `xml:"link"`
+	CommentsLink sql.NullString `xml:"comments"`
+	Description  string         `xml:"description"`
 }
 
 type Feed struct {
@@ -67,6 +68,10 @@ func (i *Item) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 				i.Title += string(bytes.TrimSpace(charData))
 			case "link":
 				i.Link += string(bytes.TrimSpace(charData))
+			case "comments":
+				str := string(bytes.TrimSpace(charData))
+				valid := str != ""
+				i.CommentsLink = sql.NullString{String: str, Valid: valid}
 			case "description":
 				i.Description += regexp.MustCompile("<[^>]*>").ReplaceAllString(string(charData), "\n")
 			}

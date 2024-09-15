@@ -15,6 +15,7 @@ func showFeed(d *sql.DB) func(w http.ResponseWriter, r *http.Request) {
 				feeds.title,
 				feed_entries.title,
 				feed_entries.link,
+				feed_entries.comments_link,
 				feed_entries.description
 			FROM
 				feeds,
@@ -38,7 +39,7 @@ func showFeed(d *sql.DB) func(w http.ResponseWriter, r *http.Request) {
 
 			var title string
 			var item Item
-			err := rows.Scan(&title, &item.Title, &item.Link, &item.Description)
+			err := rows.Scan(&title, &item.Title, &item.Link, &item.CommentsLink, &item.Description)
 			if err != nil {
 				panic(err)
 			}
@@ -131,6 +132,7 @@ func setEditFeed(d *sql.DB) func(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			panic(err)
 		}
+
 		for _, item := range rss.Channels[0].Items {
 			feedEntry := FeedEntry{
 				FeedId: feed.Id,
@@ -140,8 +142,8 @@ func setEditFeed(d *sql.DB) func(w http.ResponseWriter, r *http.Request) {
 			_, err = d.
 				ExecContext(r.Context(), `
 				INSERT INTO feed_entries
-					(feed_id, title, description, link) VALUES
-					($1, $2, $3, $4)`, feedEntry.FeedId, feedEntry.Title, feedEntry.Description, feedEntry.Link)
+					(feed_id, title, description, comments_link, link) VALUES
+					($1, $2, $3, $4, $5)`, feedEntry.FeedId, feedEntry.Title, feedEntry.Description, feedEntry.CommentsLink, feedEntry.Link)
 			if err != nil {
 				panic(err)
 			}
