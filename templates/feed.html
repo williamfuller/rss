@@ -7,14 +7,16 @@
 		<link rel="icon" type="image/x-icon" href="/static/favicon.ico">
     <title>Rss viewer</title>
   </head>
-  <body>
-		<a href="/" class="font-semibold text-2xl underline">Home</a>
-			<h1><a href="{{.Link}}">{{.Title}}</a></h1>
-				<ul>
+  <body class="p-2">
+		<a href="/" class="underline">Home</a>
+			<h1 class="font-semibold text-lg pt-2"><a href="{{.Link}}">{{.Title}}</a></h1>
+				<ul class="flex flex-col gap-y-2 py-2">
 					{{range .Items}}
-						<li>
-							<a href="{{.Link}}" target="_blank">{{.Title}}</a>
-							<p>{{.Description}}</p>
+						<li class="bg-gray-100 border rounded-md px-2 max-w-7xl">
+							<a href="{{.Link}}" target="_blank">
+								<h2 class="font-medium underline">{{.Title}}</h2>
+								<p>{{.Description}}</p>
+							</a>
 						</li>
 					{{end}}
 				</ul>

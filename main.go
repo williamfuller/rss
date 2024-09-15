@@ -10,10 +10,9 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"regexp"
 
 	_ "github.com/lib/pq"
-
-	"github.com/microcosm-cc/bluemonday"
 )
 
 type HTML template.HTML
@@ -31,9 +30,9 @@ type Channel struct {
 }
 
 type Item struct {
-	Title       string        `xml:"title"`
-	Link        string        `xml:"link"`
-	Description template.HTML `xml:"description"`
+	Title       string `xml:"title"`
+	Link        string `xml:"link"`
+	Description string `xml:"description"`
 }
 
 type Feed struct {
@@ -69,8 +68,7 @@ func (i *Item) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 			case "link":
 				i.Link += string(bytes.TrimSpace(charData))
 			case "description":
-				p := bluemonday.UGCPolicy()
-				i.Description += template.HTML(p.SanitizeBytes(charData))
+				i.Description += regexp.MustCompile("<[^>]*>").ReplaceAllString(string(charData), "\n")
 			}
 		case xml.EndElement:
 			break
