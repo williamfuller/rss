@@ -3,16 +3,16 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<link rel="stylesheet" href="/static/index.css">
+		<link rel="stylesheet" href="/static/styles.css">
 		<link rel="icon" type="image/x-icon" href="/static/favicon.ico">
     <title>Rss viewer</title>
   </head>
-  <body>
-		<h1>Home</h1>
-		<ul id="feed-list">
+  <body class="p-2">
+		<h1 class="font-semibold text-2xl">Home</h1>
+		<ul class="p-2 flex flex-col gap-y-2 max-w-7xl">
 			{{range .}} 
-				<li id="feed-item">
-					<a href="/feeds/show/{{.Id}}">{{.Name}}</a>
+				<li class="p-2 border rounded-md bg-gray-100 flex justify-between">
+					<a href="/feeds/show/{{.Id}}">{{.Title}}</a>
 					<a href="/feeds/edit/{{.Id}}">Edit</a>
 				</li>
 			{{end}}

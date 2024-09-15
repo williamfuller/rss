@@ -8,10 +8,8 @@
     <title>Rss viewer</title>
   </head>
   <body>
-		<a href="/">home</a>
-			{{range .Channels}} 
+		<a href="/" class="font-semibold text-2xl underline">Home</a>
 			<h1><a href="{{.Link}}">{{.Title}}</a></h1>
-			<p>{{.Description}}</p>
 				<ul>
 					{{range .Items}}
 						<li>
@@ -20,7 +18,6 @@
 						</li>
 					{{end}}
 				</ul>
-			{{end}}
   </body>
 </html>
 

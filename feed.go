@@ -5,46 +5,65 @@ import (
 	"errors"
 	"html/template"
 	"net/http"
-	"strconv"
 )
 
 func showFeed(d *sql.DB) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var url string
-		err := d.
-			QueryRowContext(r.Context(), "SELECT url FROM feeds WHERE id = $1", r.PathValue("Id")).
-			Scan(&url)
+		rows, err := d.
+			QueryContext(r.Context(), `
+			SELECT
+				feeds.title,
+				feed_entries.title,
+				feed_entries.link,
+				feed_entries.description
+			FROM
+				feeds,
+				feed_entries
+			WHERE
+				feeds.id = feed_entries.feed_id AND
+				feeds.id = $1`, r.PathValue("Id"))
 		if err != nil {
 			panic(err)
 		}
 
-		rss, err := rss(url)
-		if err != nil {
-			panic(err)
+		var feed Feed
+		for {
+			hasRow := rows.Next()
+			if !hasRow {
+				if rows.Err() != nil {
+					panic(rows.Err())
+				}
+				break
+			}
+
+			var title string
+			var item Item
+			err := rows.Scan(&title, &item.Title, &item.Link, &item.Description)
+			if err != nil {
+				panic(err)
+			}
+
+			feed.Title = title
+			feed.Items = append(feed.Items, item)
 		}
 
 		tmplt, err := template.ParseFiles("templates/feed.html")
 		if err != nil {
 			panic(err)
 		}
-		tmplt.Execute(w, rss)
-	}
-}
 
-func idFormValue(r *http.Request) int {
-	id, err := strconv.Atoi(r.FormValue("Id"))
-	if err != nil {
-		id = 0
+		err = tmplt.Execute(w, feed)
+		if err != nil {
+			panic(err)
+		}
 	}
-
-	return id
 }
 
 func getEditFeed(d *sql.DB) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var feed Feed
 		err := d.
-			QueryRowContext(r.Context(), "SELECT id, url FROM feeds WHERE id = $1", r.PathValue("Id")).
+			QueryRowContext(r.Context(), "SELECT id, url FROM feeds WHERE id = $1", idPathValue(r)).
 			Scan(&feed.Id, &feed.URL)
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			panic(err)
@@ -54,7 +73,10 @@ func getEditFeed(d *sql.DB) func(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			panic(err)
 		}
-		tmplt.Execute(w, feed)
+		err = tmplt.Execute(w, feed)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 
@@ -65,20 +87,20 @@ func setEditFeed(d *sql.DB) func(w http.ResponseWriter, r *http.Request) {
 			panic(err)
 		}
 
-		feed := Feed{
-			Id:  idFormValue(r),
-			URL: r.FormValue("URL"),
-		}
-
-		rss, err := rss(feed.URL)
+		url := r.FormValue("URL")
+		rss, err := rss(url)
 		if err != nil {
 			panic(err)
 		}
-		feed.Name = rss.Channels[0].Title
 
+		feed := Feed{
+			Id:      idFormValue(r),
+			URL:     url,
+			Channel: rss.Channels[0],
+		}
 		if feed.Id == 0 {
 			_, err = d.
-				ExecContext(r.Context(), "INSERT INTO feeds (name, url) VALUES ($1, $2)", feed.Name, feed.URL)
+				ExecContext(r.Context(), "INSERT INTO feeds (url, title, description, link) VALUES ($1, $2, $3, $4)", feed.URL, feed.Title, feed.Description, feed.Link)
 			if err != nil {
 				panic(err)
 			}
@@ -89,9 +111,27 @@ func setEditFeed(d *sql.DB) func(w http.ResponseWriter, r *http.Request) {
 			}
 		} else {
 			_, err = d.
-				ExecContext(r.Context(), "UPDATE feeds SET name=$1, url=$2 WHERE id=$3", feed.Name, feed.URL, feed.Id)
+				ExecContext(r.Context(), "UPDATE feeds SET title=$1, url=$2,link=$3, description=$4 WHERE id=$5", feed.Title, feed.URL, feed.Link, feed.Description, feed.Id)
 			if err != nil {
 				panic(err)
+			}
+
+			_, err = d.
+				ExecContext(r.Context(), "DELETE FROM feed_entries WHERE feed_id = $1", feed.Id)
+			if err != nil {
+				panic(err)
+			}
+			for _, item := range rss.Channels[0].Items {
+				feedEntry := FeedEntry{
+					FeedId: feed.Id,
+					Item:   item,
+				}
+
+				_, err = d.
+					ExecContext(r.Context(), "INSERT INTO feed_entries (feed_id, title, description, link) VALUES ($1, $2, $3, $4)", feedEntry.FeedId, feedEntry.Title, feedEntry.Description, feedEntry.Link)
+				if err != nil {
+					panic(err)
+				}
 			}
 
 			err = redirect(w, "feed updated")

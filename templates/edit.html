@@ -7,18 +7,18 @@
 		<link rel="icon" type="image/x-icon" href="/static/favicon.ico">
     <title>Rss viewer</title>
   </head>
-  <body>
-		<a href="/">Home</a>
+  <body class="p-2">
+		<a href="/" class="underline">Home</a>
 		{{if .Id}}
-			<h1>Edit</h1>
+			<h1 class="font-semibold text-2xl">Edit</h1>
 		{{else}}
-			<h1>New</h1>
+			<h1 class="font-semibold text-2xl">New</h1>
 		{{end}}
 		<form method="POST" action="/feeds/edit">
 				<input id="Id" type="hidden"  name="Id" value="{{.Id}}"/>
 			<div>
 				<label for="URL">URL</label>
-				<input id="URL" type="text"  name="URL" value="{{.URL}}" autocomplete="off" required/>
+				<input id="URL" type="text" name="URL" value="{{.URL}}" autocomplete="off" required/>
 			</div>
 			<div id="action-btns">
 				<input type="submit" value="Save"/>

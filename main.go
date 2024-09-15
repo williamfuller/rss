@@ -37,9 +37,15 @@ type Item struct {
 }
 
 type Feed struct {
-	Id   int
-	URL  string
-	Name string
+	Id  int
+	URL string
+	Channel
+}
+
+type FeedEntry struct {
+	Id     int
+	FeedId int
+	Item
 }
 
 func (i *Item) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
@@ -74,8 +80,8 @@ func (i *Item) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	return nil
 }
 
-func rss(url string) (*Rss, error) {
-	resp, err := http.Get(url)
+func rss(link string) (*Rss, error) {
+	resp, err := http.Get(link)
 	if err != nil {
 		return nil, fmt.Errorf("rss http get: %w", err)
 	}
@@ -104,14 +110,14 @@ func redirect(w http.ResponseWriter, message string) error {
 func index(d *sql.DB) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var feeds []Feed
-		rows, err := d.Query("SELECT id, name FROM feeds;")
+		rows, err := d.Query("SELECT id, title FROM feeds")
 		if err != nil {
 			panic(err)
 		}
 		for {
 			if rows.Next() {
 				var feed Feed
-				err := rows.Scan(&feed.Id, &feed.Name)
+				err := rows.Scan(&feed.Id, &feed.Title)
 				if err != nil {
 					panic(err)
 				}
@@ -128,7 +134,11 @@ func index(d *sql.DB) func(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			panic(err)
 		}
-		tmplt.Execute(w, feeds)
+
+		err = tmplt.Execute(w, feeds)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 
@@ -146,7 +156,7 @@ func main() {
 	if len(os.Args) > 1 && os.Args[1] == "migrate" {
 		err := migrate(db)
 		if err != nil {
-			panic(err)
+			panic(fmt.Errorf("migrate: %w", err))
 		}
 	} else {
 		http.HandleFunc("GET /{$}", index(db))

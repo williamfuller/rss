@@ -5,6 +5,3 @@ CREATE TABLE feed_entries (
 	link text NOT NULL,
 	description text NOT NULL
 );
-
-ALTER TABLE feeds ADD COLUMN updated_at timestamp with time zone NOT NULL DEFAULT NOW();
-ALTER TABLE feeds ADD COLUMN ttl int NOT NULL DEFAULT 0;
