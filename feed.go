@@ -86,8 +86,8 @@ func setEditFeed(d *sql.DB) func(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			panic(err)
 		}
-
 		url := r.FormValue("URL")
+
 		rss, err := rss(url)
 		if err != nil {
 			panic(err)
@@ -99,47 +99,58 @@ func setEditFeed(d *sql.DB) func(w http.ResponseWriter, r *http.Request) {
 			Channel: rss.Channels[0],
 		}
 		if feed.Id == 0 {
-			_, err = d.
-				ExecContext(r.Context(), "INSERT INTO feeds (url, title, description, link) VALUES ($1, $2, $3, $4)", feed.URL, feed.Title, feed.Description, feed.Link)
-			if err != nil {
-				panic(err)
-			}
-
-			err = redirect(w, "feed added")
+			err := d.
+				QueryRowContext(r.Context(), `
+				INSERT INTO feeds 
+					(url, title, description, link) VALUES 
+					($1, $2, $3, $4)
+				RETURNING id`, feed.URL, feed.Title, feed.Description, feed.Link).
+				Scan(&feed.Id)
 			if err != nil {
 				panic(err)
 			}
 		} else {
-			_, err = d.
-				ExecContext(r.Context(), "UPDATE feeds SET title=$1, url=$2,link=$3, description=$4 WHERE id=$5", feed.Title, feed.URL, feed.Link, feed.Description, feed.Id)
-			if err != nil {
-				panic(err)
-			}
-
-			_, err = d.
-				ExecContext(r.Context(), "DELETE FROM feed_entries WHERE feed_id = $1", feed.Id)
-			if err != nil {
-				panic(err)
-			}
-			for _, item := range rss.Channels[0].Items {
-				feedEntry := FeedEntry{
-					FeedId: feed.Id,
-					Item:   item,
-				}
-
-				_, err = d.
-					ExecContext(r.Context(), "INSERT INTO feed_entries (feed_id, title, description, link) VALUES ($1, $2, $3, $4)", feedEntry.FeedId, feedEntry.Title, feedEntry.Description, feedEntry.Link)
-				if err != nil {
-					panic(err)
-				}
-			}
-
-			err = redirect(w, "feed updated")
+			_, err := d.
+				ExecContext(r.Context(), `
+				UPDATE feeds 
+				SET 
+					title=$1,
+					url=$2,link=$3,
+					description=$4
+				WHERE id=$5`, feed.Title, feed.URL, feed.Link, feed.Description, feed.Id)
 			if err != nil {
 				panic(err)
 			}
 		}
 
+		// TODO run in tx
+		_, err = d.
+			ExecContext(r.Context(), `
+			DELETE FROM feed_entries
+			WHERE feed_id = $1`, feed.Id)
+		if err != nil {
+			panic(err)
+		}
+		for _, item := range rss.Channels[0].Items {
+			feedEntry := FeedEntry{
+				FeedId: feed.Id,
+				Item:   item,
+			}
+
+			_, err = d.
+				ExecContext(r.Context(), `
+				INSERT INTO feed_entries
+					(feed_id, title, description, link) VALUES
+					($1, $2, $3, $4)`, feedEntry.FeedId, feedEntry.Title, feedEntry.Description, feedEntry.Link)
+			if err != nil {
+				panic(err)
+			}
+		}
+
+		err = redirect(w, "feed updated")
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 
