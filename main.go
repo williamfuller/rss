@@ -15,8 +15,6 @@ import (
 	_ "github.com/lib/pq"
 )
 
-type HTML template.HTML
-
 type Rss struct {
 	XMLName  xml.Name  `xml:"rss"`
 	Channels []Channel `xml:"channel"`
@@ -34,18 +32,6 @@ type Item struct {
 	Link         string         `xml:"link"`
 	CommentsLink sql.NullString `xml:"comments"`
 	Description  string         `xml:"description"`
-}
-
-type Feed struct {
-	Id  int
-	URL string
-	Channel
-}
-
-type FeedEntry struct {
-	Id     int
-	FeedId int
-	Item
 }
 
 func (i *Item) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
@@ -110,39 +96,43 @@ func redirect(w http.ResponseWriter, message string) error {
 	return nil
 }
 
-func index(d *sql.DB) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		var feeds []Feed
-		rows, err := d.Query("SELECT id, title FROM feeds")
-		if err != nil {
-			panic(err)
-		}
-		for {
-			if rows.Next() {
-				var feed Feed
-				err := rows.Scan(&feed.Id, &feed.Title)
-				if err != nil {
-					panic(err)
-				}
-				feeds = append(feeds, feed)
-			} else {
-				if rows.Err() != nil {
-					panic(rows.Err())
-				}
-				break
+func index(d *sql.DB, w http.ResponseWriter, r *http.Request) {
+	var feeds []Feed
+	rows, err := d.Query("SELECT id, title FROM feeds")
+	if err != nil {
+		panic(err)
+	}
+	for {
+		if rows.Next() {
+			var feed Feed
+			err := rows.Scan(&feed.Id, &feed.Title)
+			if err != nil {
+				panic(err)
 			}
-		}
-
-		tmplt, err := template.ParseFiles("templates/index.html")
-		if err != nil {
-			panic(err)
-		}
-
-		err = tmplt.Execute(w, feeds)
-		if err != nil {
-			panic(err)
+			feeds = append(feeds, feed)
+		} else {
+			if rows.Err() != nil {
+				panic(rows.Err())
+			}
+			break
 		}
 	}
+
+	tmplt, err := template.ParseFiles("templates/index.html")
+	if err != nil {
+		panic(err)
+	}
+
+	err = tmplt.Execute(w, feeds)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func route(path string, d *sql.DB, controller func(*sql.DB, http.ResponseWriter, *http.Request)) {
+	http.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
+		controller(d, w, r)
+	})
 }
 
 func main() {
@@ -162,13 +152,16 @@ func main() {
 			panic(fmt.Errorf("migrate: %w", err))
 		}
 	} else {
-		http.HandleFunc("GET /{$}", index(db))
-		http.HandleFunc("GET /feeds/edit/{Id}", getEditFeed(db))
-		http.HandleFunc("GET /feeds/edit", getEditFeed(db))
-		http.HandleFunc("POST /feeds/edit", setEditFeed(db))
-		http.HandleFunc("GET /feeds/delete/{Id}", deleteFeed(db))
-		http.HandleFunc("GET /feeds/show/{Id}", showFeed(db))
+		var feeds FeedsController
+		route("GET /{$}", db, index)
+		route("GET /feeds/edit/{Id}", db, feeds.GetEdit)
+		route("GET /feeds/edit", db, feeds.GetEdit)
+		route("POST /feeds/edit", db, feeds.SetEdit)
+		route("GET /feeds/delete/{Id}", db, feeds.Delete)
+		route("GET /feeds/show/{Id}", db, feeds.Show)
+
 		http.Handle("/static/", http.FileServer(http.Dir("")))
+
 		err = http.ListenAndServe(":8080", nil)
 		if err != nil {
 			panic(err)
