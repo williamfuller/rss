@@ -98,7 +98,7 @@ func redirect(w http.ResponseWriter, message string) error {
 
 func index(d *sql.DB, w http.ResponseWriter, r *http.Request) {
 	var feeds []Feed
-	rows, err := d.Query("SELECT id, title FROM feeds")
+	rows, err := d.Query("SELECT id, title FROM feeds ORDER by title, id")
 	if err != nil {
 		panic(err)
 	}
