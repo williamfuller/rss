@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<link rel="stylesheet" href="/static/styles.css">
+		<link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <title>Rss viewer</title>
+  </head>
+  <body class="p-2">
+		<nav class="flex items-center gap-x-2">
+			<h1 class="font-semibold text-2xl flex-1">Feeds</h1>
+			<a href="/" class="underline">Home</a>
+			<a href="/feeds/edit" class="underline">New</a>
+		</nav>
+			<ul class="flex flex-col gap-y-2 py-2">
+			{{range .}}
+					<li class="bg-gray-100 border rounded-md px-2 max-w-7xl">
+						<h2 class="font-medium underline">{{.Title}}</h2>
+						<a href="/feeds/edit/{{.Id}}">Edit</a>
+						<a href="/feeds/delete/{{.Id}}">Delete</a>
+					</li>
+			{{end}}
+			</ul>
+  </body>
+</html>
+

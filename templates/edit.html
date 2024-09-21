@@ -8,12 +8,14 @@
     <title>Rss viewer</title>
   </head>
   <body class="p-2">
-		<a href="/" class="underline">Home</a>
-		{{if .Id}}
-			<h1 class="font-semibold text-2xl">Edit</h1>
-		{{else}}
-			<h1 class="font-semibold text-2xl">New</h1>
-		{{end}}
+		<nav class="flex items-center gap-x-2">
+			{{if .Id}}
+				<h1 class="font-semibold text-2xl flex-1">Edit</h1>
+			{{else}}
+				<h1 class="font-semibold text-2xl flex-1">New</h1>
+			{{end}}
+			<a href="/" class="underline">Home</a>
+		</nav>
 		<form method="POST" action="/feeds/edit">
 				<input id="Id" type="hidden"  name="Id" value="{{.Id}}"/>
 			<div>

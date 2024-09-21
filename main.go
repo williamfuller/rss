@@ -1,19 +1,41 @@
 package main
 
 import (
-	"bytes"
 	"database/sql"
 	"encoding/xml"
-	"errors"
 	"fmt"
 	"html/template"
-	"io"
 	"net/http"
 	"os"
-	"regexp"
+	"time"
 
 	_ "github.com/lib/pq"
 )
+
+type RFC1123Time struct {
+	time.Time
+}
+
+func (t *RFC1123Time) String() string {
+	return t.Time.Format(time.RFC1123)
+}
+
+func (t *RFC1123Time) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	var rfc822TimeString string
+	err := d.DecodeElement(&rfc822TimeString, &start)
+	if err != nil {
+		return err
+	}
+
+	parsedTime, err := time.Parse(time.RFC1123, rfc822TimeString)
+	if err != nil {
+		return err
+	}
+
+	t.Time = parsedTime
+
+	return nil
+}
 
 type Rss struct {
 	XMLName  xml.Name  `xml:"rss"`
@@ -28,45 +50,10 @@ type Channel struct {
 }
 
 type Item struct {
-	Title        string         `xml:"title"`
-	Link         string         `xml:"link"`
-	CommentsLink sql.NullString `xml:"comments"`
-	Description  string         `xml:"description"`
-}
-
-func (i *Item) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-
-	var startElement xml.StartElement
-	for {
-		token, err := d.Token()
-		if errors.Is(err, io.EOF) {
-			break
-		} else if err != nil {
-			panic(err)
-		}
-		switch token.(type) {
-		case xml.StartElement:
-			startElement = token.(xml.StartElement)
-		case xml.CharData:
-			charData := token.(xml.CharData)
-			switch startElement.Name.Local {
-			case "title":
-				i.Title += string(bytes.TrimSpace(charData))
-			case "link":
-				i.Link += string(bytes.TrimSpace(charData))
-			case "comments":
-				str := string(bytes.TrimSpace(charData))
-				valid := str != ""
-				i.CommentsLink = sql.NullString{String: str, Valid: valid}
-			case "description":
-				i.Description += regexp.MustCompile("<[^>]*>").ReplaceAllString(string(charData), "\n")
-			}
-		case xml.EndElement:
-			break
-		}
-	}
-
-	return nil
+	Title       string        `xml:"title"`
+	Link        string        `xml:"link"`
+	Description template.HTML `xml:"description"`
+	PubDate     RFC1123Time   `xml:"pubDate"`
 }
 
 func rss(link string) (*Rss, error) {
@@ -97,19 +84,20 @@ func redirect(w http.ResponseWriter, message string) error {
 }
 
 func index(d *sql.DB, w http.ResponseWriter, r *http.Request) {
-	var feeds []Feed
-	rows, err := d.Query("SELECT id, title FROM feeds ORDER by title, id")
+	rows, err := d.Query("SELECT title, link, description, pub_date FROM feed_entries ORDER by pub_date DESC, title")
 	if err != nil {
 		panic(err)
 	}
+
+	var feedEntries []FeedEntry
 	for {
+		var feedEntry FeedEntry
 		if rows.Next() {
-			var feed Feed
-			err := rows.Scan(&feed.Id, &feed.Title)
+			err := rows.Scan(&feedEntry.Title, &feedEntry.Link, &feedEntry.Description, &feedEntry.PubDate.Time)
 			if err != nil {
 				panic(err)
 			}
-			feeds = append(feeds, feed)
+			feedEntries = append(feedEntries, feedEntry)
 		} else {
 			if rows.Err() != nil {
 				panic(rows.Err())
@@ -123,7 +111,7 @@ func index(d *sql.DB, w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	err = tmplt.Execute(w, feeds)
+	err = tmplt.Execute(w, feedEntries)
 	if err != nil {
 		panic(err)
 	}
@@ -159,6 +147,7 @@ func main() {
 		route("POST /feeds/edit", db, feeds.SetEdit)
 		route("GET /feeds/delete/{Id}", db, feeds.Delete)
 		route("GET /feeds/show/{Id}", db, feeds.Show)
+		route("GET /feeds/list", db, feeds.List)
 
 		http.Handle("/static/", http.FileServer(http.Dir("")))
 

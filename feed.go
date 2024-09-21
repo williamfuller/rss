@@ -28,7 +28,6 @@ func (f *FeedsController) Show(d *sql.DB, w http.ResponseWriter, r *http.Request
 				feeds.title,
 				feed_entries.title,
 				feed_entries.link,
-				feed_entries.comments_link,
 				feed_entries.description
 			FROM
 				feeds,
@@ -52,7 +51,7 @@ func (f *FeedsController) Show(d *sql.DB, w http.ResponseWriter, r *http.Request
 
 		var title string
 		var item Item
-		err := rows.Scan(&title, &item.Title, &item.Link, &item.CommentsLink, &item.Description)
+		err := rows.Scan(&title, &item.Title, &item.Link, &item.Description)
 		if err != nil {
 			panic(err)
 		}
@@ -151,8 +150,8 @@ func (f *FeedsController) SetEdit(d *sql.DB, w http.ResponseWriter, r *http.Requ
 		_, err = d.
 			ExecContext(r.Context(), `
 				INSERT INTO feed_entries
-					(feed_id, title, description, comments_link, link) VALUES
-					($1, $2, $3, $4, $5)`, feedEntry.FeedId, feedEntry.Title, feedEntry.Description, feedEntry.CommentsLink, feedEntry.Link)
+					(feed_id, title, description,link, pub_date) VALUES
+					($1, $2, $3, $4, $5)`, feedEntry.FeedId, feedEntry.Title, feedEntry.Description, feedEntry.Link, feedEntry.PubDate.Time)
 		if err != nil {
 			panic(err)
 		}
@@ -175,4 +174,40 @@ func (f *FeedsController) Delete(d *sql.DB, w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		panic(err)
 	}
+}
+
+func (f *FeedsController) List(d *sql.DB, w http.ResponseWriter, r *http.Request) {
+	rows, err := d.
+		QueryContext(r.Context(), "SELECT id, title from feeds")
+	if err != nil {
+		panic(err)
+	}
+
+	var feeds []Feed
+	for {
+		hasRow := rows.Next()
+		if rows.Err() != nil {
+			panic(rows.Err())
+		}
+		if !hasRow {
+			break
+		}
+
+		var feed Feed
+		err := rows.Scan(&feed.Id, &feed.Title)
+		if err != nil {
+			panic(err)
+		}
+		feeds = append(feeds, feed)
+	}
+
+	tmplt, err := template.ParseFiles("templates/feeds.html")
+	if err != nil {
+		panic(err)
+	}
+	err = tmplt.Execute(w, feeds)
+	if err != nil {
+		panic(err)
+	}
+
 }

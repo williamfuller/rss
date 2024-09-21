@@ -1,0 +1,3 @@
+ALTER TABLE feed_entries ADD COLUMN pub_date TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW();
+ALTER TABLE feed_entries DROP COLUMN comments_link;
+

@@ -8,16 +8,19 @@
     <title>Rss viewer</title>
   </head>
   <body class="p-2">
-		<h1 class="font-semibold text-2xl">Home</h1>
+		<nav class="flex items-center gap-x-2">
+			<h1 class="font-semibold text-2xl flex-1">Home</h1>
+			<a href="/feeds/list" class="underline">Settings</a>
+		</nav>
 		<ul class="p-2 flex flex-col gap-y-2 max-w-7xl">
 			{{range .}} 
-				<li class="p-2 border rounded-md bg-gray-100 flex justify-between">
-					<a href="/feeds/show/{{.Id}}">{{.Title}}</a>
-					<a href="/feeds/edit/{{.Id}}">Edit</a>
+				<li class="p-2 border rounded-md bg-gray-100">
+					<a href="{{.Link}}" class="font-semibold">{{.Title}}</a>
+					<p class="text-sm text-gray-500">{{.PubDate.String}}</p>
+					<p>{{.Description}}</p>
 				</li>
 			{{end}}
 		</ul>
-		<a href="/feeds/edit">New</a>
   </body>
 </html>
 
