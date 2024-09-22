@@ -83,8 +83,17 @@ func redirect(w http.ResponseWriter, message string) error {
 	return nil
 }
 
-func index(d *sql.DB, w http.ResponseWriter, r *http.Request) {
-	rows, err := d.Query("SELECT title, link, description, pub_date FROM feed_entries ORDER by pub_date DESC, title")
+func route(path string, d *sql.DB, controller func(*sql.DB, http.ResponseWriter, *http.Request)) {
+	http.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
+		controller(d, w, r)
+	})
+}
+
+func Index(d *sql.DB, w http.ResponseWriter, r *http.Request) {
+	rows, err := d.Query(`
+	SELECT id, title, link, pub_date 
+	FROM feed_entries 
+	ORDER by pub_date DESC, title`)
 	if err != nil {
 		panic(err)
 	}
@@ -93,10 +102,11 @@ func index(d *sql.DB, w http.ResponseWriter, r *http.Request) {
 	for {
 		var feedEntry FeedEntry
 		if rows.Next() {
-			err := rows.Scan(&feedEntry.Title, &feedEntry.Link, &feedEntry.Description, &feedEntry.PubDate.Time)
+			err := rows.Scan(&feedEntry.Id, &feedEntry.Title, &feedEntry.Link, &feedEntry.PubDate.Time)
 			if err != nil {
 				panic(err)
 			}
+
 			feedEntries = append(feedEntries, feedEntry)
 		} else {
 			if rows.Err() != nil {
@@ -117,12 +127,6 @@ func index(d *sql.DB, w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func route(path string, d *sql.DB, controller func(*sql.DB, http.ResponseWriter, *http.Request)) {
-	http.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
-		controller(d, w, r)
-	})
-}
-
 func main() {
 	db, err := newDB()
 	if err != nil {
@@ -141,7 +145,9 @@ func main() {
 		}
 	} else {
 		var feeds FeedsController
-		route("GET /{$}", db, index)
+		var feedEntries FeedEntriessController
+		route("GET /{$}", db, Index)
+		route("GET /feed_entries/show/{Id}", db, feedEntries.Show)
 		route("GET /feeds/edit/{Id}", db, feeds.GetEdit)
 		route("GET /feeds/edit", db, feeds.GetEdit)
 		route("POST /feeds/edit", db, feeds.SetEdit)

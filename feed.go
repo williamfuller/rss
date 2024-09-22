@@ -13,12 +13,6 @@ type Feed struct {
 	Channel
 }
 
-type FeedEntry struct {
-	Id     int
-	FeedId int
-	Item
-}
-
 type FeedsController struct{}
 
 func (f *FeedsController) Show(d *sql.DB, w http.ResponseWriter, r *http.Request) {
