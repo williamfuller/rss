@@ -13,8 +13,8 @@
 			<h1 class="font-semibold text-2xl flex-1"><a href="/">Home</a></h1>
 			<a href="/feeds/list" class="underline">Settings</a>
 		</nav> 
-		<div class="grid grid-cols-4 h-screen">
-			<div class="overflow-y-auto hidden lg:block">
+		<div class="grid grid-cols-1 lg:grid-cols-4 h-screen">
+			<div class="overflow-y-auto">
 				{{range .}} 
 				<a hx-get="/feed_entries/show/{{.Id}}" hx-target="#description-area">
 					<div class="border-b border-t border-r h-24 px-2 hover:bg-gray-200">
@@ -24,7 +24,7 @@
 				</a>
 				{{end}}
 			</div>
-				<div id="description-area" class="col-span-4 lg:col-span-3 overflow-y-auto sticky top-10 p-2"></div>
+				<div id="description-area" class="hidden lg:block col-span-3 overflow-y-auto sticky top-10 p-2"></div>
 		</div>
   </body>
 	<script>
