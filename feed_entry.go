@@ -25,7 +25,7 @@ func (f *FeedEntriessController) Show(d *sql.DB, w http.ResponseWriter, r *http.
 		panic(err)
 	}
 
-	tmplt, err := template.ParseFiles("templates/feed_entry.html")
+	tmplt, err := template.ParseFiles("components/feed_entry.html")
 	if err != nil {
 		panic(err)
 	}
