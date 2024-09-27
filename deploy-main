@@ -1,0 +1,5 @@
+git checkout main
+git pull
+go build -o rss
+./rss migrate
+./rss
