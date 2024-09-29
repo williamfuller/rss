@@ -2,7 +2,7 @@ git checkout main
 git pull
 
 go build -o rss
-./tailwindcss -i  static/base.css -o static/styles.css --minify
+./tailwindcss -i static/base.css -o static/styles.css --minify
 
 ./rss migrate
 
