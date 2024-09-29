@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"html/template"
@@ -84,71 +85,80 @@ func (f *FeedsController) GetEdit(d *sql.DB, w http.ResponseWriter, r *http.Requ
 	}
 }
 
-func (f *FeedsController) SetEdit(d *sql.DB, w http.ResponseWriter, r *http.Request) {
-	err := r.ParseForm()
+func (f *Feed) update(d *sql.DB) error {
+	rss, err := rss(f.URL)
 	if err != nil {
-		panic(err)
-	}
-	url := r.FormValue("URL")
-
-	rss, err := rss(url)
-	if err != nil {
-		panic(err)
+		return err
 	}
 
-	feed := Feed{
-		Id:      idFormValue(r),
-		URL:     url,
-		Channel: rss.Channels[0],
-	}
-	if feed.Id == 0 {
+	f.Channel = rss.Channels[0]
+
+	if f.Id == 0 {
 		err := d.
-			QueryRowContext(r.Context(), `
+			QueryRowContext(context.Background(), `
 				INSERT INTO feeds 
 					(url, title, description, link) VALUES 
 					($1, $2, $3, $4)
-				RETURNING id`, feed.URL, feed.Title, feed.Description, feed.Link).
-			Scan(&feed.Id)
+				RETURNING id`, f.URL, f.Title, f.Description, f.Link).
+			Scan(&f.Id)
 		if err != nil {
-			panic(err)
+			return err
 		}
 	} else {
 		_, err := d.
-			ExecContext(r.Context(), `
+			ExecContext(context.Background(), `
 				UPDATE feeds 
 				SET 
 					title=$1,
 					url=$2,link=$3,
 					description=$4
-				WHERE id=$5`, feed.Title, feed.URL, feed.Link, feed.Description, feed.Id)
+				WHERE id=$5`, f.Title, f.URL, f.Link, f.Description, f.Id)
 		if err != nil {
-			panic(err)
+			return err
 		}
 	}
 
 	// TODO run in tx
 	_, err = d.
-		ExecContext(r.Context(), `
+		ExecContext(context.Background(), `
 			DELETE FROM feed_entries
-			WHERE feed_id = $1`, feed.Id)
+			WHERE feed_id = $1`, f.Id)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	for _, item := range rss.Channels[0].Items {
 		feedEntry := FeedEntry{
-			FeedId: feed.Id,
+			FeedId: f.Id,
 			Item:   item,
 		}
 
 		_, err = d.
-			ExecContext(r.Context(), `
+			ExecContext(context.Background(), `
 				INSERT INTO feed_entries
 					(feed_id, title, description,link, pub_date) VALUES
 					($1, $2, $3, $4, $5)`, feedEntry.FeedId, feedEntry.Title, feedEntry.Description, feedEntry.Link, feedEntry.PubDate.Time)
 		if err != nil {
-			panic(err)
+			return err
 		}
+	}
+
+	return nil
+}
+
+func (f *FeedsController) SetEdit(d *sql.DB, w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		panic(err)
+	}
+
+	feed := Feed{
+		Id:  idFormValue(r),
+		URL: r.FormValue("URL"),
+	}
+	err = feed.update(d)
+	if err != nil {
+		panic(err)
 	}
 
 	err = redirect(w, "feed updated")

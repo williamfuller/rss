@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"encoding/xml"
 	"fmt"
@@ -127,6 +128,28 @@ func Index(d *sql.DB, w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func startWebServer(db *sql.DB) error {
+	var feeds FeedsController
+	var feedEntries FeedEntriessController
+	route("GET /{$}", db, Index)
+	route("GET /feed_entries/show/{Id}", db, feedEntries.Show)
+	route("GET /feeds/edit/{Id}", db, feeds.GetEdit)
+	route("GET /feeds/edit", db, feeds.GetEdit)
+	route("POST /feeds/edit", db, feeds.SetEdit)
+	route("GET /feeds/delete/{Id}", db, feeds.Delete)
+	route("GET /feeds/show/{Id}", db, feeds.Show)
+	route("GET /feeds/list", db, feeds.List)
+
+	http.Handle("/static/", http.FileServer(http.Dir("")))
+
+	err := http.ListenAndServe(":8080", nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func main() {
 	db, err := newDB()
 	if err != nil {
@@ -144,22 +167,64 @@ func main() {
 			panic(fmt.Errorf("migrate: %w", err))
 		}
 	} else {
-		var feeds FeedsController
-		var feedEntries FeedEntriessController
-		route("GET /{$}", db, Index)
-		route("GET /feed_entries/show/{Id}", db, feedEntries.Show)
-		route("GET /feeds/edit/{Id}", db, feeds.GetEdit)
-		route("GET /feeds/edit", db, feeds.GetEdit)
-		route("POST /feeds/edit", db, feeds.SetEdit)
-		route("GET /feeds/delete/{Id}", db, feeds.Delete)
-		route("GET /feeds/show/{Id}", db, feeds.Show)
-		route("GET /feeds/list", db, feeds.List)
+		go func() {
+			err := startWebServer(db)
+			if err != nil {
+				panic(err)
+			}
+		}()
 
-		http.Handle("/static/", http.FileServer(http.Dir("")))
+		ticker := time.NewTicker(5 * time.Minute)
+		defer ticker.Stop()
 
-		err = http.ListenAndServe(":8080", nil)
-		if err != nil {
-			panic(err)
+		for {
+			select {
+			case <-ticker.C:
+				rows, err := db.QueryContext(context.Background(), `
+				SELECT id, url 
+				FROM feeds 
+				WHERE 
+					update_at < NOW() AND
+					is_updating = false 
+				ORDER BY id 
+				LIMIT 5`)
+				if err != nil {
+					panic(err)
+				}
+
+				for {
+					hasRows := rows.Next()
+					if !hasRows {
+						if rows.Err() != nil {
+							panic(rows.Err())
+						}
+						break
+					}
+
+					var feed Feed
+					err := rows.Scan(&feed.Id, &feed.URL)
+					if err != nil {
+						panic(err)
+					}
+
+					go func(feed Feed) {
+						_, err := db.Exec("UPDATE feeds SET is_updating = true WHERE id = $1", feed.Id)
+						if err != nil {
+							panic(err)
+						}
+
+						err = feed.update(db)
+						if err != nil {
+							panic(err)
+						}
+
+						_, err = db.Exec("UPDATE feeds SET is_updating = false, update_at = NOW() + interval '10 minutes' WHERE id = $1", feed.Id)
+						if err != nil {
+							panic(err)
+						}
+					}(feed)
+				}
+			}
 		}
 	}
 }
