@@ -10,7 +10,8 @@
   </head>
   <body>
 		{{ template "nav" }}
-			<ul class="flex flex-col gap-y-2 ml-12">
+		<main class="mb-12 lg:mb-0 lg:ml-12">
+			<ul class="flex flex-col gap-y-2">
 			{{range .}}
 					<li class="bg-gray-100 border rounded-md px-2 max-w-7xl">
 						<h2 class="font-medium underline">{{.Title}}</h2>
@@ -19,6 +20,7 @@
 					</li>
 			{{end}}
 			</ul>
+		</main>
   </body>
 </html>
 {{ end }}
