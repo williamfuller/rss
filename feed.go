@@ -132,11 +132,13 @@ func (f *Feed) update(d *sql.DB) error {
 		}
 	}
 
-	// TODO run in tx
 	_, err = d.
 		ExecContext(context.Background(), `
 			DELETE FROM feed_entries
-			WHERE feed_id = $1`, f.Id)
+			WHERE 
+				feed_id = $1 AND
+				pub_date < NOW() - interval '30 days'
+			`, f.Id)
 	if err != nil {
 		return err
 	}
