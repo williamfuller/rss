@@ -6,7 +6,6 @@ import (
 	"errors"
 	"html/template"
 	"net/http"
-	"os"
 )
 
 type Feed struct {
@@ -56,7 +55,7 @@ func (f *FeedsController) Show(d *sql.DB, w http.ResponseWriter, r *http.Request
 		feed.Items = append(feed.Items, item)
 	}
 
-	tmplt, err := template.ParseFiles("templates/feed.html")
+	tmplt, err := template.ParseFiles("pages/feed.html")
 	if err != nil {
 		panic(err)
 	}
@@ -76,24 +75,11 @@ func (f *FeedsController) GetEdit(d *sql.DB, w http.ResponseWriter, r *http.Requ
 		panic(err)
 	}
 
-	nav, err := os.ReadFile("components/nav.html")
+	tmplt, err := template.ParseFiles("pages/edit.html", "templates/nav.html")
 	if err != nil {
 		panic(err)
 	}
-
-	pageElements := struct {
-		Nav  template.HTML
-		Feed Feed
-	}{
-		Nav:  template.HTML(nav),
-		Feed: feed,
-	}
-
-	tmplt, err := template.ParseFiles("templates/edit.html")
-	if err != nil {
-		panic(err)
-	}
-	err = tmplt.Execute(w, pageElements)
+	err = tmplt.ExecuteTemplate(w, "edit", feed)
 	if err != nil {
 		panic(err)
 	}
@@ -221,11 +207,11 @@ func (f *FeedsController) List(d *sql.DB, w http.ResponseWriter, r *http.Request
 		feeds = append(feeds, feed)
 	}
 
-	tmplt, err := template.ParseFiles("templates/feeds.html")
+	tmplt, err := template.ParseFiles("pages/feeds.html", "templates/nav.html")
 	if err != nil {
 		panic(err)
 	}
-	err = tmplt.Execute(w, feeds)
+	err = tmplt.ExecuteTemplate(w, "feeds", feeds)
 	if err != nil {
 		panic(err)
 	}

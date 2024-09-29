@@ -76,11 +76,12 @@ func rss(link string) (*Rss, error) {
 }
 
 func redirect(w http.ResponseWriter, message string) error {
-	tmplt, err := template.ParseFiles("templates/redirect.html")
+	tmplt, err := template.ParseFiles("pages/redirect.html", "templates/nav.html")
 	if err != nil {
 		return err
 	}
-	tmplt.Execute(w, message)
+
+	tmplt.ExecuteTemplate(w, "redirect", message)
 	return nil
 }
 
@@ -92,7 +93,7 @@ func route(path string, d *sql.DB, controller func(*sql.DB, http.ResponseWriter,
 
 func Index(d *sql.DB, w http.ResponseWriter, r *http.Request) {
 	rows, err := d.Query(`
-	SELECT id, title, link, pub_date 
+	SELECT id, title, link, description, pub_date 
 	FROM feed_entries 
 	ORDER by pub_date DESC, title`)
 	if err != nil {
@@ -103,7 +104,7 @@ func Index(d *sql.DB, w http.ResponseWriter, r *http.Request) {
 	for {
 		var feedEntry FeedEntry
 		if rows.Next() {
-			err := rows.Scan(&feedEntry.Id, &feedEntry.Title, &feedEntry.Link, &feedEntry.PubDate.Time)
+			err := rows.Scan(&feedEntry.Id, &feedEntry.Title, &feedEntry.Link, &feedEntry.Description, &feedEntry.PubDate.Time)
 			if err != nil {
 				panic(err)
 			}
@@ -117,25 +118,8 @@ func Index(d *sql.DB, w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	nav, err := os.ReadFile("components/nav.html")
-	if err != nil {
-		panic(err)
-	}
-
-	pageElements := struct {
-		Nav         template.HTML
-		FeedEntries []FeedEntry
-	}{
-		Nav:         template.HTML(nav),
-		FeedEntries: feedEntries,
-	}
-
-	tmplt, err := template.ParseFiles("templates/index.html")
-	if err != nil {
-		panic(err)
-	}
-
-	err = tmplt.Execute(w, pageElements)
+	tmplt := template.Must(template.ParseFiles("pages/index.html", "templates/nav.html"))
+	err = tmplt.ExecuteTemplate(w, "index", feedEntries)
 	if err != nil {
 		panic(err)
 	}

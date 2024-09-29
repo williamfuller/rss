@@ -1,3 +1,4 @@
+{{ define "feeds" }}
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -7,13 +8,9 @@
 		<link rel="icon" type="image/x-icon" href="/static/favicon.ico">
     <title>Rss viewer</title>
   </head>
-  <body class="p-2 max-w-7xl mx-auto">
-		<nav class="flex items-center gap-x-2 mb-2">
-			<h1 class="font-semibold text-2xl flex-1">Feeds</h1>
-			<a href="/" class="underline">Home</a>
-			<a href="/feeds/edit" class="underline">New</a>
-		</nav>
-			<ul class="flex flex-col gap-y-2">
+  <body>
+		{{ template "nav" }}
+			<ul class="flex flex-col gap-y-2 ml-12">
 			{{range .}}
 					<li class="bg-gray-100 border rounded-md px-2 max-w-7xl">
 						<h2 class="font-medium underline">{{.Title}}</h2>
@@ -24,4 +21,4 @@
 			</ul>
   </body>
 </html>
-
+{{ end }}

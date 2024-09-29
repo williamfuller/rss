@@ -1,3 +1,4 @@
+{{ define "redirect" }}
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -7,12 +8,9 @@
 		<link rel="icon" type="image/x-icon" href="/static/favicon.ico">
     <title>Rss viewer</title>
   </head>
-  <body class="p-2 max-w-7xl mx-auto">
-		<nav class="flex items-center gap-x-2 mb-2">
-			<h1 class="font-semibold text-2xl flex-1">Redirect</h1>
-			<a href="/" class="underline">Home</a>
-		</nav>
-		<p>{{.}}</p>
+  <body>
+		{{ template "nav" }}
+		<p class="ml-12">{{.}}</p>
   </body>
 </html>
-
+{{ end }}
