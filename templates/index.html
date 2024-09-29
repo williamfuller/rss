@@ -9,13 +9,10 @@
   </head>
   <body>
 		<script src="/static/htmx.js"></script>
-		<nav class="flex items-center gap-x-2 p-2 sticky top-0 bg-lime-400 z-10">
-			<h1 class="font-semibold text-2xl flex-1"><a href="/">Home</a></h1>
-			<a href="/feeds/list" class="underline">Settings</a>
-		</nav> 
-		<div class="grid grid-cols-1 lg:grid-cols-4 h-screen">
-			<div class="overflow-y-auto">
-				{{range .}} 
+		{{.Nav}}
+		<main class="lg:ml-12 lg:grid lg:grid-cols-4 flex flex-col-reverse">
+			<aside>
+				{{range .FeedEntries}} 
 				<a hx-get="/feed_entries/show/{{.Id}}" hx-target="#description-area">
 					<div class="border-b border-t border-r h-24 px-2 hover:bg-gray-200">
 						<p class="font-semibold">{{.Title}}</p>
@@ -23,11 +20,11 @@
 					</div>
 				</a>
 				{{end}}
+			</aside>
+			<div class="col-span-3">
+				<article id="description-area" class="sticky top-0 overflow-y-auto">
+				</article>
 			</div>
-				<div id="description-area" class="hidden lg:block col-span-3 overflow-y-auto sticky top-10 p-2"></div>
-		</div>
+		</main>
   </body>
-	<script>
-
-	</script>
 </html>

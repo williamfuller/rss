@@ -7,28 +7,23 @@
 		<link rel="icon" type="image/x-icon" href="/static/favicon.ico">
     <title>Rss viewer</title>
   </head>
-  <body class="p-2 max-w-7xl mx-auto">
-		<nav class="flex items-center gap-x-2 mb-2">
-			{{if .Id}}
-				<h1 class="font-semibold text-2xl flex-1">Edit</h1>
-			{{else}}
-				<h1 class="font-semibold text-2xl flex-1">New</h1>
-			{{end}}
-			<a href="/" class="underline">Home</a>
-		</nav>
-		<form method="POST" action="/feeds/edit">
-				<input id="Id" type="hidden"  name="Id" value="{{.Id}}"/>
-			<div>
-				<label for="URL">URL</label>
-				<input id="URL" type="text" name="URL" value="{{.URL}}" autocomplete="off" required autofocus/>
-			</div>
-			<div id="action-btns">
-				<input type="submit" value="Save"/>
-				{{if .Id}}
-					<a href="/feeds/delete/{{.Id}}">Delete</a>
-				{{end}}
-			</div>
-		</form>
+  <body>
+		{{.Nav}}
+		<main class="ml-12">
+			<form method="POST" action="/feeds/edit">
+					<input id="Id" type="hidden"  name="Id" value="{{.Feed.Id}}"/>
+				<div>
+					<label for="URL">URL</label>
+					<input id="URL" type="text" name="URL" value="{{.Feed.URL}}" autocomplete="off" required autofocus/>
+				</div>
+				<div id="action-btns">
+					<input type="submit" value="Save"/>
+					{{if .Feed.Id}}
+						<a href="/feeds/delete/{{.Feed.Id}}">Delete</a>
+					{{end}}
+				</div>
+			</form>
+		</main>
   </body>
 </html>
 

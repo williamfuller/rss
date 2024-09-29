@@ -6,6 +6,7 @@ import (
 	"errors"
 	"html/template"
 	"net/http"
+	"os"
 )
 
 type Feed struct {
@@ -75,11 +76,24 @@ func (f *FeedsController) GetEdit(d *sql.DB, w http.ResponseWriter, r *http.Requ
 		panic(err)
 	}
 
+	nav, err := os.ReadFile("components/nav.html")
+	if err != nil {
+		panic(err)
+	}
+
+	pageElements := struct {
+		Nav  template.HTML
+		Feed Feed
+	}{
+		Nav:  template.HTML(nav),
+		Feed: feed,
+	}
+
 	tmplt, err := template.ParseFiles("templates/edit.html")
 	if err != nil {
 		panic(err)
 	}
-	err = tmplt.Execute(w, feed)
+	err = tmplt.Execute(w, pageElements)
 	if err != nil {
 		panic(err)
 	}

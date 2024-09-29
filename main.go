@@ -117,12 +117,25 @@ func Index(d *sql.DB, w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	nav, err := os.ReadFile("components/nav.html")
+	if err != nil {
+		panic(err)
+	}
+
+	pageElements := struct {
+		Nav         template.HTML
+		FeedEntries []FeedEntry
+	}{
+		Nav:         template.HTML(nav),
+		FeedEntries: feedEntries,
+	}
+
 	tmplt, err := template.ParseFiles("templates/index.html")
 	if err != nil {
 		panic(err)
 	}
 
-	err = tmplt.Execute(w, feedEntries)
+	err = tmplt.Execute(w, pageElements)
 	if err != nil {
 		panic(err)
 	}
