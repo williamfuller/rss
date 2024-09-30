@@ -138,8 +138,10 @@ func (f *Feed) update(d *sql.DB) error {
 		_, err = d.
 			ExecContext(context.Background(), `
 				INSERT INTO feed_entries
-					(feed_id, title, description,link, pub_date) VALUES
-					($1, $2, $3, $4, $5)`, feedEntry.FeedId, feedEntry.Title, feedEntry.Description, feedEntry.Link, feedEntry.PubDate.Time)
+					(feed_id, title, description, link, pub_date) 
+					VALUES ($1, $2, $3, $4, $5)
+					ON CONFLICT ON CONSTRAINT feed_id_link_key DO NOTHING
+					`, feedEntry.FeedId, feedEntry.Title, feedEntry.Description, feedEntry.Link, feedEntry.PubDate.Time)
 		if err != nil {
 			return err
 		}
