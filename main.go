@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -28,9 +29,14 @@ func (t *RFC1123Time) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error
 		return err
 	}
 
-	parsedTime, err := time.Parse(time.RFC1123, rfc822TimeString)
+	var parsedTime time.Time
+	parsedTime, err = time.Parse(time.RFC1123, rfc822TimeString)
 	if err != nil {
-		return err
+		var err2 error
+		parsedTime, err2 = time.Parse("Mon, _2 Jan 2006 15:04:05 -0700", rfc822TimeString)
+		if err2 != nil {
+			return errors.Join(err, err2)
+		}
 	}
 
 	t.Time = parsedTime
