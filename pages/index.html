@@ -11,7 +11,7 @@
   <body>
 		<script src="/static/htmx.js"></script>
 		{{ template "nav" . }}
-		<main class="mt-14 lg:mt-0 lg:ml-14 lg:grid lg:grid-cols-4 flex flex-col-reverse">
+		<main class="ml-14 grid grid-cols-4">
 			<aside>
 				{{ range . }} 
 				<a hx-get="/feed_entries/show/{{ .Id }}" hx-target="#description-area">
