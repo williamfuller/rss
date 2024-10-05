@@ -107,7 +107,7 @@ func route(path string, d *sql.DB, controller func(*sql.DB, http.ResponseWriter,
 			err = template.Must(template.ParseFiles("templates/filter.html", "templates/nav.html", fmt.Sprintf("pages/%s.html", templateName))).
 				ExecuteTemplate(w, templateName, &response)
 		} else {
-			err = template.Must(template.ParseFiles(fmt.Sprintf("template/%s.html", templateName))).
+			err = template.Must(template.ParseFiles(fmt.Sprintf("templates/%s.html", templateName))).
 				ExecuteTemplate(w, templateName, &response)
 		}
 		if err != nil {
