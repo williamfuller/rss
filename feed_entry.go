@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"html/template"
 	"net/http"
 )
 
@@ -12,9 +11,9 @@ type FeedEntry struct {
 	Item
 }
 
-type FeedEntriessController struct{}
+type FeedEntriesController struct{}
 
-func (f *FeedEntriessController) Show(d *sql.DB, w http.ResponseWriter, r *http.Request) {
+func (f *FeedEntriesController) Show(d *sql.DB, w http.ResponseWriter, r *http.Request) (*Response, string, error) {
 	feedEntry := FeedEntry{Id: idPathValue(r)}
 	err := d.QueryRowContext(r.Context(), `
 	SELECT title, link, description, pub_date 
@@ -22,16 +21,8 @@ func (f *FeedEntriessController) Show(d *sql.DB, w http.ResponseWriter, r *http.
 	WHERE id = $1
 	ORDER by pub_date DESC, title`, feedEntry.Id).Scan(&feedEntry.Title, &feedEntry.Link, &feedEntry.Description, &feedEntry.PubDate.Time)
 	if err != nil {
-		panic(err)
+		return nil, "", err
 	}
 
-	tmplt, err := template.ParseFiles("templates/feed_entry.html")
-	if err != nil {
-		panic(err)
-	}
-
-	err = tmplt.Execute(w, &feedEntry)
-	if err != nil {
-		panic(err)
-	}
+	return &Response{Data: feedEntry}, "feed_entry", nil
 }

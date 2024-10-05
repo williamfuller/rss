@@ -12,15 +12,15 @@
 		{{ template "nav"}}
 		<main class="ml-14">
 			<form method="POST" action="/feeds/edit">
-					<input id="Id" type="hidden"  name="Id" value="{{ .Id }}"/>
+					<input id="Id" type="hidden"  name="Id" value="{{ .Data.Id }}"/>
 				<div>
 					<label for="URL">URL</label>
-					<input id="URL" type="text" name="URL" value="{{ .URL }}" autocomplete="off" required autofocus/>
+					<input id="URL" type="text" name="URL" value="{{ .Data.URL }}" autocomplete="off" required autofocus/>
 				</div>
-				<div id="action-btns">
+				<div>
 					<input type="submit" value="Save"/>
-					{{if .Id }}
-						<a href="/feeds/delete/{{ .Id }}">Delete</a>
+					{{if .Data.Id }}
+						<a href="/feeds/delete/{{ .Data.Id }}">Delete</a>
 					{{end}}
 				</div>
 			</form>

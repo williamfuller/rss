@@ -1,4 +1,4 @@
-{{ define "index" }}
+{{define "index"}}
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -10,17 +10,17 @@
   </head>
   <body>
 		<script src="/static/htmx.js"></script>
-		{{ template "nav" . }}
+		{{template "nav" .}}
 		<main class="ml-14 grid grid-cols-4">
 			<aside class="overflow-y-auto h-screen">
-				{{ range . }} 
+				{{range .Data}} 
 				<a hx-get="/feed_entries/show/{{ .Id }}" hx-target="#description-area">
 					<div class="border-b border-t border-r h-24 px-2 hover:bg-gray-200">
-						<p class="font-semibold">{{ .Title }}</p>
-						<p class="text-sm text-gray-500">{{ .PubDate.String }}</p>
+						<p class="font-semibold">{{.Title}}</p>
+						<p class="text-sm text-gray-500">{{.PubDate.String}}</p>
 					</div>
 				</a>
-				{{ end }}
+				{{end}}
 			</aside>
 			<div class="col-span-3 h-screen overflow-y-auto">
 				<article id="description-area" class="sticky top-0 p-2 max-w-5xl mx-auto">
@@ -29,4 +29,4 @@
 		</main>
   </body>
 </html>
-{{ end }}
+{{end}}

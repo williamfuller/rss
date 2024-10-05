@@ -63,6 +63,16 @@ type Item struct {
 	PubDate     RFC1123Time   `xml:"pubDate"`
 }
 
+type Response struct {
+	Data          interface{}
+	ShowFilter    bool
+	FilterOptions FilterOptions
+}
+
+type FilterOptions struct {
+	Feeds []Feed
+}
+
 func rss(link string) (*Rss, error) {
 	resp, err := http.Get(link)
 	if err != nil {
@@ -81,29 +91,51 @@ func rss(link string) (*Rss, error) {
 	return rss, nil
 }
 
-func redirect(w http.ResponseWriter, message string) error {
-	tmplt, err := template.ParseFiles("pages/redirect.html", "templates/nav.html")
-	if err != nil {
-		return err
-	}
-
-	tmplt.ExecuteTemplate(w, "redirect", message)
-	return nil
-}
-
-func route(path string, d *sql.DB, controller func(*sql.DB, http.ResponseWriter, *http.Request)) {
+func route(path string, d *sql.DB, controller func(*sql.DB, http.ResponseWriter, *http.Request) (*Response, string, error), isPage bool) {
 	http.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
-		controller(d, w, r)
+		err := r.ParseForm()
+		if err != nil {
+			panic(err)
+		}
+
+		response, templateName, err := controller(d, w, r)
+		if err != nil {
+			panic(err)
+		}
+
+		if isPage {
+			err = template.Must(template.ParseFiles("templates/filter.html", "templates/nav.html", fmt.Sprintf("pages/%s.html", templateName))).
+				ExecuteTemplate(w, templateName, &response)
+		} else {
+			err = template.Must(template.ParseFiles(fmt.Sprintf("template/%s.html", templateName))).
+				ExecuteTemplate(w, templateName, &response)
+		}
+		if err != nil {
+			panic(err)
+		}
 	})
 }
 
-func Index(d *sql.DB, w http.ResponseWriter, r *http.Request) {
-	rows, err := d.Query(`
-	SELECT id, title, link, description, pub_date 
-	FROM feed_entries 
-	ORDER by pub_date DESC, title`)
+func Index(db *sql.DB, w http.ResponseWriter, r *http.Request) (*Response, string, error) {
+	feedId := r.FormValue("FeedId")
+	var rows *sql.Rows
+	var err error
+	if feedId != "" {
+		rows, err = db.Query(`
+			SELECT id, title, link, description, pub_date 
+			FROM feed_entries 
+			WHERE feed_id = $1
+			ORDER by pub_date DESC, title`,
+			feedId)
+	} else {
+		rows, err = db.Query(`
+			SELECT id, title, link, description, pub_date 
+			FROM feed_entries 
+			ORDER by pub_date DESC, title`,
+		)
+	}
 	if err != nil {
-		panic(err)
+		return nil, "", err
 	}
 
 	var feedEntries []FeedEntry
@@ -112,36 +144,61 @@ func Index(d *sql.DB, w http.ResponseWriter, r *http.Request) {
 		if rows.Next() {
 			err := rows.Scan(&feedEntry.Id, &feedEntry.Title, &feedEntry.Link, &feedEntry.Description, &feedEntry.PubDate.Time)
 			if err != nil {
-				panic(err)
+				return nil, "", err
 			}
 
 			feedEntries = append(feedEntries, feedEntry)
 		} else {
 			if rows.Err() != nil {
-				panic(rows.Err())
+				return nil, "", rows.Err()
 			}
 			break
 		}
 	}
 
-	tmplt := template.Must(template.ParseFiles("pages/index.html", "templates/nav.html"))
-	err = tmplt.ExecuteTemplate(w, "index", feedEntries)
+	filterOptions, err := filterOptions(db)
 	if err != nil {
-		panic(err)
+		return nil, "", err
 	}
+
+	return &Response{Data: feedEntries, ShowFilter: true, FilterOptions: *filterOptions}, "index", nil
+}
+
+func filterOptions(db *sql.DB) (*FilterOptions, error) {
+	rows, err := db.Query("SELECT id, title FROM feeds")
+	if err != nil {
+		return nil, err
+	}
+
+	var filterOptions FilterOptions
+	for {
+		if !rows.Next() {
+			if rows.Err() != nil {
+				return nil, err
+			}
+			break
+		}
+		var feed Feed
+		err = rows.Scan(&feed.Id, &feed.Title)
+		if err != nil {
+			return nil, err
+		}
+		filterOptions.Feeds = append(filterOptions.Feeds, feed)
+	}
+
+	return &filterOptions, nil
 }
 
 func startWebServer(db *sql.DB) error {
 	var feeds FeedsController
-	var feedEntries FeedEntriessController
-	route("GET /{$}", db, Index)
-	route("GET /feed_entries/show/{Id}", db, feedEntries.Show)
-	route("GET /feeds/edit/{Id}", db, feeds.GetEdit)
-	route("GET /feeds/edit", db, feeds.GetEdit)
-	route("POST /feeds/edit", db, feeds.SetEdit)
-	route("GET /feeds/delete/{Id}", db, feeds.Delete)
-	route("GET /feeds/show/{Id}", db, feeds.Show)
-	route("GET /feeds/list", db, feeds.List)
+	var feedEntries FeedEntriesController
+	route("GET /{$}", db, Index, true)
+	route("GET /feed_entries/show/{Id}", db, feedEntries.Show, false)
+	route("GET /feeds/edit/{Id}", db, feeds.GetEdit, true)
+	route("GET /feeds/edit", db, feeds.GetEdit, true)
+	route("POST /feeds/edit", db, feeds.SetEdit, true)
+	route("GET /feeds/delete/{Id}", db, feeds.Delete, true)
+	route("GET /feeds/list", db, feeds.List, true)
 
 	http.Handle("/static/", http.FileServer(http.Dir("")))
 

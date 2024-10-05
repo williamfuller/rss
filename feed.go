@@ -66,23 +66,16 @@ func (f *FeedsController) Show(d *sql.DB, w http.ResponseWriter, r *http.Request
 	}
 }
 
-func (f *FeedsController) GetEdit(d *sql.DB, w http.ResponseWriter, r *http.Request) {
+func (f *FeedsController) GetEdit(d *sql.DB, w http.ResponseWriter, r *http.Request) (*Response, string, error) {
 	var feed Feed
 	err := d.
 		QueryRowContext(r.Context(), "SELECT id, url FROM feeds WHERE id = $1", idPathValue(r)).
 		Scan(&feed.Id, &feed.URL)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		panic(err)
+		return nil, "", err
 	}
 
-	tmplt, err := template.ParseFiles("pages/edit.html", "templates/nav.html")
-	if err != nil {
-		panic(err)
-	}
-	err = tmplt.ExecuteTemplate(w, "edit", feed)
-	if err != nil {
-		panic(err)
-	}
+	return &Response{Data: feed, ShowFilter: false}, "edit", nil
 }
 
 func (f *Feed) update(d *sql.DB) error {
@@ -150,52 +143,41 @@ func (f *Feed) update(d *sql.DB) error {
 	return nil
 }
 
-func (f *FeedsController) SetEdit(d *sql.DB, w http.ResponseWriter, r *http.Request) {
-	err := r.ParseForm()
-	if err != nil {
-		panic(err)
-	}
-
+func (f *FeedsController) SetEdit(d *sql.DB, w http.ResponseWriter, r *http.Request) (*Response, string, error) {
 	feed := Feed{
 		Id:  idFormValue(r),
 		URL: r.FormValue("URL"),
 	}
-	err = feed.update(d)
+	err := feed.update(d)
 	if err != nil {
-		panic(err)
+		return nil, "", err
 	}
 
-	err = redirect(w, "feed updated")
-	if err != nil {
-		panic(err)
-	}
+	return &Response{Data: "feed updated"}, "redirect", nil
 }
 
-func (f *FeedsController) Delete(d *sql.DB, w http.ResponseWriter, r *http.Request) {
+func (f *FeedsController) Delete(d *sql.DB, w http.ResponseWriter, r *http.Request) (*Response, string, error) {
 	_, err := d.
 		ExecContext(r.Context(), "DELETE FROM feeds WHERE id = $1", r.PathValue("Id"))
 	if err != nil {
-		panic(err)
+		return nil, "", err
 	}
 
-	err = redirect(w, "feed deleted")
-	if err != nil {
-		panic(err)
-	}
+	return &Response{Data: "feed deleted"}, "redirect", nil
 }
 
-func (f *FeedsController) List(d *sql.DB, w http.ResponseWriter, r *http.Request) {
+func (f *FeedsController) List(d *sql.DB, w http.ResponseWriter, r *http.Request) (*Response, string, error) {
 	rows, err := d.
 		QueryContext(r.Context(), "SELECT id, title from feeds")
 	if err != nil {
-		panic(err)
+		return nil, "", err
 	}
 
 	var feeds []Feed
 	for {
 		hasRow := rows.Next()
 		if rows.Err() != nil {
-			panic(rows.Err())
+			return nil, "", rows.Err()
 		}
 		if !hasRow {
 			break
@@ -204,18 +186,10 @@ func (f *FeedsController) List(d *sql.DB, w http.ResponseWriter, r *http.Request
 		var feed Feed
 		err := rows.Scan(&feed.Id, &feed.Title)
 		if err != nil {
-			panic(err)
+			return nil, "", err
 		}
 		feeds = append(feeds, feed)
 	}
 
-	tmplt, err := template.ParseFiles("pages/feeds.html", "templates/nav.html")
-	if err != nil {
-		panic(err)
-	}
-	err = tmplt.ExecuteTemplate(w, "feeds", feeds)
-	if err != nil {
-		panic(err)
-	}
-
+	return &Response{Data: feeds}, "feeds", nil
 }
