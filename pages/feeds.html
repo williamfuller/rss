@@ -1,5 +1,4 @@
 {{ define "feeds" }}
-<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8">
@@ -11,12 +10,14 @@
   <body>
 		{{ template "nav" }}
 		<main class="ml-14">
-			<ul class="flex flex-col gap-y-2">
+			<ul class="flex flex-wrap p-2 gap-2">
 			{{range .Data}}
-					<li class="bg-gray-100 border rounded-md px-2 max-w-7xl">
-						<h2 class="font-medium underline">{{.Title}}</h2>
-						<a href="/feeds/edit/{{.Id}}">Edit</a>
-						<a href="/feeds/delete/{{.Id}}">Delete</a>
+					<li class="bg-gray-100 border rounded-md px-2 w-screen lg:w-48 h-24 flex flex-col justify-between">
+						<h2 class="font-semibold">{{.Title}}</h2>
+						<div class="self-end">
+							<a href="/feeds/edit/{{.Id}}" class="hover:underline p-2">Edit</a>
+							<a href="/feeds/delete/{{.Id}}" class="hover:underline text-red-500">Delete</a>
+						</div>
 					</li>
 			{{end}}
 			</ul>
