@@ -11,11 +11,11 @@
   <body>
 		<script src="/static/htmx.js"></script>
 		{{template "nav" .}}
-		<main class="ml-14 grid grid-cols-4">
-			<aside class="overflow-y-auto h-screen">
+		<main class="ml-14 bg-orange-50 grid grid-cols-4">
+			<aside class="overflow-y-auto h-screen border-r bg-white">
 				{{range .Data}} 
 				<a hx-get="/feed_entries/show/{{ .Id }}" hx-target="#description-area">
-					<div class="border-b border-t border-r h-24 px-2 hover:bg-gray-200">
+					<div class="border-b h-24 px-2 hover:bg-gray-200">
 						<p class="font-semibold">{{.Title}}</p>
 						<p class="text-sm text-gray-500">{{.PubDate.String}}</p>
 					</div>

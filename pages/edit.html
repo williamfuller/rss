@@ -1,5 +1,4 @@
 {{ define "edit" }}
-<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8">
@@ -10,19 +9,19 @@
   </head>
   <body>
 		{{ template "nav"}}
-		<main class="ml-14">
-			<form method="POST" action="/feeds/edit">
-					<input id="Id" type="hidden"  name="Id" value="{{ .Data.Id }}"/>
-				<div>
-					<label for="URL">URL</label>
-					<input id="URL" type="text" name="URL" value="{{ .Data.URL }}" autocomplete="off" required autofocus/>
-				</div>
-				<div>
-					<input type="submit" value="Save"/>
+		<main class="ml-14 bg-orange-50 h-screen">
+			<form method="POST" action="/feeds/edit" class="p-2 m-2 flex flex-col gap-2 bg-white border rounded-md lg:w-1/2">
+				<input id="Id" type="hidden"  name="Id" value="{{ .Data.Id }}"/>
+				<fieldset>
+					<label for="URL" class="font-semibold">URL</label>
+					<input class="border border-gray-500 rounded-md bg-gray-100 px-2" id="URL" type="text" name="URL" value="{{ .Data.URL }}" autocomplete="off" required autofocus/>
+				</fieldset>
+				<fieldset class="self-end">
+					<input type="submit" value="Save" class="hover:underline"/>
 					{{if .Data.Id }}
-						<a href="/feeds/delete/{{ .Data.Id }}">Delete</a>
+						<a href="/feeds/delete/{{.Data.Id }}" class="cursor-default text-red-500 hover:underline pl-2">Delete</a>
 					{{end}}
-				</div>
+				</fieldset>
 			</form>
 		</main>
   </body>
