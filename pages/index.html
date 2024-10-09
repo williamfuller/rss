@@ -24,6 +24,11 @@
 			</aside>
 			<div class="col-span-3 h-screen overflow-y-auto">
 				<article id="description-area" class="max-w-5xl mx-auto">
+					<a href="{{(index .Data 0).Link}}">
+						<h2 class="font-semibold text-xl text-center">{{(index .Data 0).Title}}</h2>
+					</a>
+					<p class="text-sm text-gray-500 text-center">{{(index .Data 0).PubDate}}</p>
+					<p>{{(index .Data 0).Description}}</p>
 				</article>
 			</div>
 		</main>
