@@ -9,8 +9,9 @@ import (
 )
 
 type Feed struct {
-	Id  int
-	URL string
+	Id       int
+	URL      string
+	IsHidden bool
 	Channel
 }
 
@@ -69,8 +70,8 @@ func (f *FeedsController) Show(d *sql.DB, w http.ResponseWriter, r *http.Request
 func (f *FeedsController) GetEdit(d *sql.DB, w http.ResponseWriter, r *http.Request) (*Response, string, error) {
 	var feed Feed
 	err := d.
-		QueryRowContext(r.Context(), "SELECT id, url FROM feeds WHERE id = $1", idPathValue(r)).
-		Scan(&feed.Id, &feed.URL)
+		QueryRowContext(r.Context(), "SELECT id, url, is_hidden FROM feeds WHERE id = $1", idPathValue(r)).
+		Scan(&feed.Id, &feed.URL, &feed.IsHidden)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, "", err
 	}
@@ -90,9 +91,9 @@ func (f *Feed) update(d *sql.DB) error {
 		err := d.
 			QueryRowContext(context.Background(), `
 				INSERT INTO feeds 
-					(url, title, description, link) VALUES 
-					($1, $2, $3, $4)
-				RETURNING id`, f.URL, f.Title, f.Description, f.Link).
+					(url, is_hidden, title, description, link) VALUES 
+					($1, $2, $3, $4, $5)
+				RETURNING id`, f.URL, f.IsHidden, f.Title, f.Description, f.Link).
 			Scan(&f.Id)
 		if err != nil {
 			return err
@@ -104,8 +105,9 @@ func (f *Feed) update(d *sql.DB) error {
 				SET 
 					title=$1,
 					url=$2,link=$3,
-					description=$4
-				WHERE id=$5`, f.Title, f.URL, f.Link, f.Description, f.Id)
+					description=$4,
+					is_hidden=$5
+				WHERE id=$6`, f.Title, f.URL, f.Link, f.Description, f.IsHidden, f.Id)
 		if err != nil {
 			return err
 		}
@@ -145,8 +147,9 @@ func (f *Feed) update(d *sql.DB) error {
 
 func (f *FeedsController) SetEdit(d *sql.DB, w http.ResponseWriter, r *http.Request) (*Response, string, error) {
 	feed := Feed{
-		Id:  idFormValue(r),
-		URL: r.FormValue("URL"),
+		Id:       idFormValue(r),
+		IsHidden: r.FormValue("IsHidden") == "on",
+		URL:      r.FormValue("URL"),
 	}
 	err := feed.update(d)
 	if err != nil {

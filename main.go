@@ -129,8 +129,10 @@ func Index(db *sql.DB, w http.ResponseWriter, r *http.Request) (*Response, strin
 			feedId)
 	} else {
 		rows, err = db.Query(`
-			SELECT id, title, link, description, pub_date 
-			FROM feed_entries 
+			SELECT feed_entries.id, feed_entries.title, feed_entries.link, feed_entries.description, feed_entries.pub_date 
+			FROM feed_entries, feeds
+			WHERE feeds.id = feed_id 
+				AND is_hidden = false
 			ORDER by pub_date DESC, title`,
 		)
 	}
@@ -165,7 +167,7 @@ func Index(db *sql.DB, w http.ResponseWriter, r *http.Request) (*Response, strin
 }
 
 func filterOptions(db *sql.DB) (*FilterOptions, error) {
-	rows, err := db.Query("SELECT id, title FROM feeds")
+	rows, err := db.Query("SELECT id, title FROM feeds WHERE is_hidden = false")
 	if err != nil {
 		return nil, err
 	}
