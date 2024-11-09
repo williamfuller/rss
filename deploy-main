@@ -1,9 +1,9 @@
 git checkout main
 git pull
 
-go build -o rss
+go build -o rss-app
 ./tailwindcss -i static/base.css -o static/styles.css --minify
 
-./rss migrate
+./rss-app migrate
 
-./rss
+./rss-app
