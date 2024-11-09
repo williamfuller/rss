@@ -1,4 +1,4 @@
-module rss
+module rss-app
 
 go 1.22.1
 

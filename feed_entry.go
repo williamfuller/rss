@@ -3,12 +3,13 @@ package main
 import (
 	"database/sql"
 	"net/http"
+	"rss-app/rss"
 )
 
 type FeedEntry struct {
 	Id     int
 	FeedId int
-	Item
+	rss.Item
 }
 
 type FeedEntriesController struct{}

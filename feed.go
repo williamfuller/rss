@@ -6,13 +6,14 @@ import (
 	"errors"
 	"html/template"
 	"net/http"
+	"rss-app/rss"
 )
 
 type Feed struct {
 	Id       int
 	URL      string
 	IsHidden bool
-	Channel
+	rss.Channel
 }
 
 type FeedsController struct{}
@@ -46,7 +47,7 @@ func (f *FeedsController) Show(d *sql.DB, w http.ResponseWriter, r *http.Request
 		}
 
 		var title string
-		var item Item
+		var item rss.Item
 		err := rows.Scan(&title, &item.Title, &item.Link, &item.Description)
 		if err != nil {
 			panic(err)
@@ -80,7 +81,7 @@ func (f *FeedsController) GetEdit(d *sql.DB, w http.ResponseWriter, r *http.Requ
 }
 
 func (f *Feed) update(d *sql.DB) error {
-	rss, err := rss(f.URL)
+	rss, err := rss.New(f.URL)
 	if err != nil {
 		return err
 	}
