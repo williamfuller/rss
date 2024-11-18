@@ -1,7 +1,8 @@
 git checkout main
 git pull
 
-go build -o rss-app
+GOARCH=arm go build -o rss-app
+
 ./tailwindcss -i static/base.css -o static/styles.css --minify
 
 ./rss-app migrate
