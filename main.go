@@ -174,7 +174,7 @@ func main() {
 			select {
 			case <-ticker.C:
 				rows, err := db.QueryContext(context.Background(), `
-				SELECT id, url 
+				SELECT id, url, is_hidden 
 				FROM feeds 
 				WHERE 
 					update_at < NOW() AND
@@ -195,7 +195,7 @@ func main() {
 					}
 
 					var feed Feed
-					err := rows.Scan(&feed.Id, &feed.URL)
+					err := rows.Scan(&feed.Id, &feed.URL, &feed.IsHidden)
 					if err != nil {
 						panic(err)
 					}
