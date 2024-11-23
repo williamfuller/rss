@@ -4,9 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"html/template"
 	"net/http"
 	"os"
+	"rss-app/html"
 	"time"
 
 	_ "github.com/lib/pq"
@@ -35,11 +35,9 @@ func route(path string, d *sql.DB, controller func(*sql.DB, http.ResponseWriter,
 		}
 
 		if isPage {
-			err = template.Must(template.ParseFiles("templates/filter.html", "templates/nav.html", fmt.Sprintf("pages/%s.html", templateName))).
-				ExecuteTemplate(w, templateName, &response)
+			err = html.ParseWithFilter(templateName).Execute(w, &response)
 		} else {
-			err = template.Must(template.ParseFiles(fmt.Sprintf("templates/%s.html", templateName))).
-				ExecuteTemplate(w, templateName, &response)
+			err = html.Parse(templateName).Execute(w, &response)
 		}
 		if err != nil {
 			panic(err)
@@ -94,7 +92,7 @@ func Index(db *sql.DB, w http.ResponseWriter, r *http.Request) (*Response, strin
 		return nil, "", err
 	}
 
-	return &Response{Data: feedEntries, ShowFilter: true, FilterOptions: *filterOptions}, "index", nil
+	return &Response{Data: feedEntries, ShowFilter: true, FilterOptions: *filterOptions}, "html/feeds/list.html", nil
 }
 
 func filterOptions(db *sql.DB) (*FilterOptions, error) {

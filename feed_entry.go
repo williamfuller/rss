@@ -25,5 +25,5 @@ func (f *FeedEntriesController) Show(d *sql.DB, w http.ResponseWriter, r *http.R
 		return nil, "", err
 	}
 
-	return &Response{Data: feedEntry}, "feed_entry", nil
+	return &Response{Data: feedEntry}, "html/feed_entries/show.html", nil
 }

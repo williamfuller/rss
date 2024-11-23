@@ -1,0 +1,22 @@
+{{define "filter"}}
+<form class="absolute">
+	<label for="open-filters" class="text-sm font-semibold hover:underline p-2">
+		Filters
+	</label>
+	<input id="open-filters" type="checkbox" class="peer hidden"/>
+	<fieldset class="hidden peer-checked:flex flex-col relative -top-7 ml-14 w-screen bg-orange-500 p-2 text-sm gap-y-2">
+		<section>
+			<label class="font-semibold" for="feed-select">By feed</label>
+			<select id="feed-select" name="FeedId">
+				<option value=""></option>
+				{{range .FilterOptions.Feeds}}
+				<option value="{{.Id}}">{{.Title}}</option>
+				{{end}}
+			</select>
+		</section>
+		<section>
+			<input type="submit" value="Apply" class="bg-gray-200 px-1 py-0.5 hover:bg-gray-300"/>
+		</section>
+	</fieldset>
+</form>
+{{end}}
