@@ -1,10 +1,13 @@
 {{define "content"}}
-<div class="flex flex-col">
-	{{range .Data}} 
-	<a class="border h-24 p-2" href="/feed_entries/show/{{.Id}}">
-			<p class="font-bold truncate">{{.Title}}</p>
-			<p class="text-sm text-gray-500">{{.PubDate}}</p>
-		</a>
+<ul class="flex flex-wrap p-2 gap-2">
+	{{range .Data}}
+		<li class="bg-white border border-gray-100 rounded-md px-2 w-screen lg:w-48 h-24 flex flex-col justify-between">
+		<a href="/?FeedId={{.Id}}">	<h2 class="font-semibold">{{.Title}}</h2></a>
+		<div class="self-end">
+		<a href="/feeds/edit/{{.Id}}" class="hover:underline p-2">Edit</a>
+		<a href="/feeds/delete/{{.Id}}" class="hover:underline text-red-500">Delete</a>
+		</div>
+		</li>
 	{{end}}
-</div>
+</ul>
 {{end}}

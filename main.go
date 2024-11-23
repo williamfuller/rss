@@ -92,7 +92,7 @@ func Index(db *sql.DB, w http.ResponseWriter, r *http.Request) (*Response, strin
 		return nil, "", err
 	}
 
-	return &Response{Data: feedEntries, ShowFilter: true, FilterOptions: *filterOptions}, "html/feeds/list.html", nil
+	return &Response{Data: feedEntries, ShowFilter: true, FilterOptions: *filterOptions}, "html/feed_entries/list.html", nil
 }
 
 func filterOptions(db *sql.DB) (*FilterOptions, error) {
