@@ -1,0 +1,19 @@
+{{define "content"}}
+	<form method="POST" action="/feeds/edit" class="p-2 m-2 flex flex-col gap-2 bg-white border rounded-md lg:w-1/2">
+	<input id="Id" type="hidden"  name="Id" value="{{ .Data.Id }}"/>
+	<fieldset>
+			<label for="URL" class="font-semibold">URL</label>
+			<input class="border border-gray-500 rounded-md bg-gray-100 px-2" id="URL" type="text" name="URL" value="{{ .Data.URL }}" autocomplete="off" required autofocus/>
+	</fieldset>
+	<fieldset>
+		<label for="IsHidden" class="font-semibold">Hide from home</label>
+		<input id="IsHidden" type="checkbox" name="IsHidden" {{if .Data.IsHidden}}checked{{end}} />
+	</fieldset>
+	<fieldset class="self-end">
+		<input type="submit" value="Save" class="hover:underline"/>
+		{{if .Data.Id}} 
+			<a href="/feeds/delete/{{.Data.Id }}" class="cursor-default text-red-500 hover:underline pl-2">Delete</a>
+		{{end}}
+	</fieldset>
+</form>
+{{end}}

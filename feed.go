@@ -77,7 +77,7 @@ func (f *FeedsController) GetEdit(d *sql.DB, w http.ResponseWriter, r *http.Requ
 		return nil, "", err
 	}
 
-	return &Response{Data: feed, ShowFilter: false}, "edit", nil
+	return &Response{Data: feed, ShowFilter: false}, "html/feeds/edit.html", nil
 }
 
 func (f *Feed) update(d *sql.DB) error {
@@ -157,7 +157,7 @@ func (f *FeedsController) SetEdit(d *sql.DB, w http.ResponseWriter, r *http.Requ
 		return nil, "", err
 	}
 
-	return &Response{Data: "feed updated"}, "html/feeds/list.html", nil
+	return Index(d, w, r)
 }
 
 func (f *FeedsController) Delete(d *sql.DB, w http.ResponseWriter, r *http.Request) (*Response, string, error) {
