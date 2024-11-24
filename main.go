@@ -4,9 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"html/template"
 	"net/http"
 	"os"
+	"rss-app/html"
 	"time"
 
 	_ "github.com/lib/pq"
@@ -14,7 +14,6 @@ import (
 
 type Response struct {
 	Data          interface{}
-	ShowFilter    bool
 	FilterOptions FilterOptions
 }
 
@@ -22,7 +21,7 @@ type FilterOptions struct {
 	Feeds []Feed
 }
 
-func route(path string, d *sql.DB, controller func(*sql.DB, http.ResponseWriter, *http.Request) (*Response, string, error), isPage bool) {
+func route(path string, d *sql.DB, controller func(*sql.DB, http.ResponseWriter, *http.Request) (*Response, string, error)) {
 	http.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
 		err := r.ParseForm()
 		if err != nil {
@@ -34,13 +33,7 @@ func route(path string, d *sql.DB, controller func(*sql.DB, http.ResponseWriter,
 			panic(err)
 		}
 
-		if isPage {
-			err = template.Must(template.ParseFiles("templates/filter.html", "templates/nav.html", fmt.Sprintf("pages/%s.html", templateName))).
-				ExecuteTemplate(w, templateName, &response)
-		} else {
-			err = template.Must(template.ParseFiles(fmt.Sprintf("templates/%s.html", templateName))).
-				ExecuteTemplate(w, templateName, &response)
-		}
+		err = html.ParseWithFilter(templateName).Execute(w, &response)
 		if err != nil {
 			panic(err)
 		}
@@ -94,7 +87,7 @@ func Index(db *sql.DB, w http.ResponseWriter, r *http.Request) (*Response, strin
 		return nil, "", err
 	}
 
-	return &Response{Data: feedEntries, ShowFilter: true, FilterOptions: *filterOptions}, "index", nil
+	return &Response{Data: feedEntries, FilterOptions: *filterOptions}, "html/feed_entries/list.html", nil
 }
 
 func filterOptions(db *sql.DB) (*FilterOptions, error) {
@@ -125,13 +118,13 @@ func filterOptions(db *sql.DB) (*FilterOptions, error) {
 func startWebServer(db *sql.DB) error {
 	var feeds FeedsController
 	var feedEntries FeedEntriesController
-	route("GET /{$}", db, Index, true)
-	route("GET /feed_entries/show/{Id}", db, feedEntries.Show, false)
-	route("GET /feeds/edit/{Id}", db, feeds.GetEdit, true)
-	route("GET /feeds/edit", db, feeds.GetEdit, true)
-	route("POST /feeds/edit", db, feeds.SetEdit, true)
-	route("GET /feeds/delete/{Id}", db, feeds.Delete, true)
-	route("GET /feeds/list", db, feeds.List, true)
+	route("GET /{$}", db, Index)
+	route("GET /feed_entries/show/{Id}", db, feedEntries.Show)
+	route("GET /feeds/edit/{Id}", db, feeds.GetEdit)
+	route("GET /feeds/edit", db, feeds.GetEdit)
+	route("POST /feeds/edit", db, feeds.SetEdit)
+	route("GET /feeds/delete/{Id}", db, feeds.Delete)
+	route("GET /feeds/list", db, feeds.List)
 
 	http.Handle("/static/", http.FileServer(http.Dir("")))
 
