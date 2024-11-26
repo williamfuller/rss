@@ -1,7 +1,7 @@
 {{define "content"}}
-<div class="flex flex-col">
+<div class="flex flex-col p-2 gap-2">
 	{{range .Data}} 
-	<a class="border h-24 p-2" href="/feed_entries/show/{{.Id}}">
+	<a class="bg-white border border-gray-100 rounded-md px-2 h-24 flex flex-col justify-between" href="/feed_entries/show/{{.Id}}">
 			<p class="font-bold truncate">{{.Title}}</p>
 			<p class="text-sm text-gray-500">{{.PubDate}}</p>
 		</a>

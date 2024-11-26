@@ -1,7 +1,7 @@
 {{define "content"}}
-<ul class="flex flex-wrap p-2 gap-2">
+<ul class="flex flex-col p-2 gap-2">
 	{{range .Data}}
-		<li class="bg-white border border-gray-100 rounded-md px-2 w-screen lg:w-48 h-24 flex flex-col justify-between">
+		<li class="bg-white border border-gray-100 rounded-md px-2 h-24 flex flex-col justify-between">
 		<a href="/?FeedId={{.Id}}">	<h2 class="font-semibold">{{.Title}}</h2></a>
 		<div class="self-end">
 		<a href="/feeds/edit/{{.Id}}" class="hover:underline p-2">Edit</a>
