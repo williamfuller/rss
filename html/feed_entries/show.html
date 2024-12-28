@@ -1,5 +1,7 @@
 {{define "content"}}
-<div>
-	{{.Data.Description}}
-</div>
+<article class="h-full w-full p-2">
+	<a href="{{.Data.Link}}"><h2 class="font-semibold text-center">{{.Data.Title}}</h2></a>
+	<p class="text-center text-sm text-gray-500">{{.Data.PubDate}}</p>
+	<section>{{.Data.Description}}</section>
+</article>
 {{end}}

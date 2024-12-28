@@ -13,8 +13,17 @@ type RFC1123Time struct {
 	time.Time
 }
 
-func (t *RFC1123Time) String() string {
-	return t.Time.Format(time.RFC1123)
+func (t RFC1123Time) String() string {
+	since := time.Since(t.Time).Round(time.Hour).Hours()
+
+	switch {
+	case since < 24:
+		return fmt.Sprintf("%.0f h ago", since)
+	case since > 24 && since < 48:
+		return "1 day ago"
+	default:
+		return fmt.Sprintf("%.0f days ago", since/24)
+	}
 }
 
 func (t *RFC1123Time) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
