@@ -64,7 +64,7 @@ type Item struct {
 	Title       string        `xml:"title"`
 	Link        string        `xml:"link"`
 	Description template.HTML `xml:"description"`
-	Content     template.HTML `xml:"content:encoded"`
+	Content     template.HTML `xml:"encoded"`
 	PubDate     RFC1123Time   `xml:"pubDate"`
 }
 

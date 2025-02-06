@@ -6,7 +6,7 @@
 		<link rel="icon" type="image/x-icon" href="/static/favicon.svg">
     <title>Rss viewer</title>
   </head>
-  <body>
+  <body class="bg-orange-100">
 		<!-- nav bar -->
 		<div class="fixed top-0 w-14 h-full">
 			{{block "filter" .}}{{end}}
@@ -32,7 +32,7 @@
 			</nav>
 		</div>
 
-		<div class="ml-14 bg-orange-100">
+		<div class="ml-14">
 			{{block "content" .}}{{end}}
 		</div>
 
